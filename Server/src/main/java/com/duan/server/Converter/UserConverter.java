@@ -1,0 +1,65 @@
+package com.duan.server.Converter;
+
+import com.duan.server.DTO.EventDTO;
+import com.duan.server.DTO.UserDTO;
+import com.duan.server.Models.EventEntity;
+import com.duan.server.Models.UserEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Component
+public class UserConverter {
+
+    @Autowired
+    private EventConverter eventConverter;
+
+    public Set<EventDTO> convertEventSavedListToDTO(Set<EventEntity> eventEntityList){
+        return eventEntityList
+                .stream()
+                .map(e-> eventConverter.toDTO(e))
+                .collect(Collectors.toSet());
+    }
+    public Set<EventEntity> convertEventSavedListToEntity(Set<EventDTO> eventDTOList){
+        return eventDTOList
+                .stream()
+                .map(e-> eventConverter.toEntity(e))
+                .collect(Collectors.toSet());
+    }
+    public UserEntity toEntity(UserDTO userDTO) {
+        UserEntity userEntity = new UserEntity();
+        if (userDTO.getId() != null) {
+            userEntity.setId(userDTO.getId());
+        }
+        userEntity.setFullName(userDTO.getFullName());
+        userEntity.setEmail(userDTO.getEmail());
+        userEntity.setPassword(userDTO.getPassword());
+        userEntity.setAvatar(userDTO.getAvatar());
+        userEntity.setBirthYear(userDTO.getBirthYear());
+        userEntity.setRole(userDTO.getRole());
+        if(userDTO.getCreatedAt() != null){
+            userEntity.setCreatedAt(userDTO.getCreatedAt());
+        }
+        userEntity.setLogin_times(userDTO.getLogin_times());
+//        userEntity.setList_events_saved(convertEventSavedListToEntity(userDTO.getList_events_saved()));
+        return userEntity;
+    }
+
+    public UserDTO toDto(UserEntity userEntity) {
+        UserDTO userDTO = new UserDTO();
+        if (userEntity.getId() != null) {
+            userDTO.setId(userEntity.getId());
+        }
+        userDTO.setFullName(userEntity.getFullName());
+        userDTO.setEmail(userEntity.getEmail());
+        userDTO.setPassword(userEntity.getPassword());
+        userDTO.setAvatar(userEntity.getAvatar());
+        userDTO.setBirthYear(userEntity.getBirthYear());
+        userDTO.setRole(userEntity.getRole());
+        userDTO.setCreatedAt(userEntity.getCreatedAt());
+        userDTO.setLogin_times(userEntity.getLogin_times());
+//        userDTO.setList_events_saved(convertEventSavedListToDTO(userEntity.getList_events_saved()));
+        return userDTO;
+    }
+}
