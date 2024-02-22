@@ -19,4 +19,4 @@
 * septan1112@gmail.com - 654321
 
 ## Link of Document API in server:
-   Click [Drive](https://drive.google.com/drive/folders/1jJw2tEasaYsLpGZd4aoZVafpI9lXEZce?usp=sharing) to see the doc..
+   Click [Drive](https://docs.google.com/document/d/1rOm6lNOGTfQHcZg5RKpemqH3WBM3GFAM/edit?usp=sharing&ouid=102777691000780820494&rtpof=true&sd=true) to see the doc..
