@@ -7,7 +7,7 @@
 1. **Run this command below:**
 
    ```Powershell
-   docker run -dp 8083:8083 --name springboot-docker-container tanphuocdt1/springboot-docker:v1.0.6
+   docker run -dp 8083:8083 --name springboot-docker-container tanphuocdt1/springboot-docker:v1.0.5
 2. **Note:**
    You should put the port 8083 if you do not have any application that run in this port. If you have, so you need to change the different port.
 

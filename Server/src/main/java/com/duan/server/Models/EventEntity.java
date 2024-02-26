@@ -87,7 +87,7 @@ public class EventEntity {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name="event_participators",
+            name="tbl_event_participators",
             uniqueConstraints = {
                     @UniqueConstraint(name="Unique_participation",
                             columnNames = {"event_id","user_id"}

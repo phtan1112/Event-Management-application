@@ -1,16 +1,19 @@
 package com.duan.server.Services.Implement;
 
 import com.duan.server.Configurations.Security.CustomUserDetail;
+import com.duan.server.Configurations.Security.JWTService;
 import com.duan.server.Converter.EventConverter;
 import com.duan.server.Converter.UserConverter;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Models.UserEntity;
 import com.duan.server.Repository.UserRepository;
+import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IUserService;
 import com.duan.server.Validators.ValidateEmail;
-import jdk.swing.interop.SwingInterOpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,7 +28,6 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -38,8 +40,6 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-
     @Autowired
     private ImageService imageService;
 
@@ -48,11 +48,19 @@ public class UserService implements IUserService, UserDetailsService {
     @Autowired
     private EventConverter eventConverter;
 
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JWTService jwtService;
+
+
+
     @Override
     public String getUserEmailByAuthorization() {
         //find email user through Authorization
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         return authentication.getName(); // because I use the email not using username
     }
 
@@ -89,7 +97,9 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO findUserByEmail() {
-        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        String email = getUserEmailByAuthorization();
+        System.out.println(email);
+        UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity != null) {
             UserDTO userDTO = userConverter.toDto(userEntity);
             userDTO.setList_events_saved(
@@ -97,6 +107,7 @@ public class UserService implements IUserService, UserDetailsService {
             return userDTO;
         }
         return null;
+
     }
     @Override
     public UserDTO findUserByEmail(String email) {
@@ -120,20 +131,18 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO findUserByEmailAndPassword(String email, String password) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                email,password
+        ));
         UserEntity userEntity = userRepository.findByEmail(email);
+        userEntity.setLogin_times(userEntity.getLogin_times() + 1);
 
-        if (userEntity != null) {
-            if (passwordEncoder.matches(password, userEntity.getPassword())) {
-                userEntity.setLogin_times(userEntity.getLogin_times() + 1);
-                UserDTO userDTO = userConverter.toDto(userEntity);
-                userDTO.setList_events_saved(
-                        userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
-                return userDTO;
-            } else {
-                return null;
-            }
-        }
-        return null;
+        String token = jwtService.generateToken(new CustomUserDetail(userEntity));
+        UserDTO userDTO = userConverter.toDto(userEntity);
+        userDTO.setList_events_saved(
+                userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
+        userDTO.setToken(token);
+        return userDTO;
     }
 
     @Transactional
@@ -213,10 +222,11 @@ public class UserService implements IUserService, UserDetailsService {
     @Override
     public UserDTO uploadAvatarUserByEmail(String email, MultipartFile image) {
         UserDTO userDTO = findUserByEmail(email);
+        String emailFromAuthorization = getUserEmailByAuthorization();
         if (userDTO != null) {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
-                if (getUserEmailByAuthorization().equals(email)) {
+                if (emailFromAuthorization.equals(email)) {
                     String urlImageUploaded = imageService.uploadImage(image);
                     if (urlImageUploaded != null) {
                         imageService.removeImageExist(userDTO.getAvatar());
@@ -228,6 +238,14 @@ public class UserService implements IUserService, UserDetailsService {
             }
         }
         return null;
+    }
+
+    @Override
+    public Set<EventDTO> seeAllEventsSavedOfUser() {
+        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        Set<EventDTO> list_saved = userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved());
+
+        return list_saved;
     }
 
     @Override
@@ -294,6 +312,6 @@ public class UserService implements IUserService, UserDetailsService {
         if (u != null) {
             return new CustomUserDetail(u);
         }
-        throw new UsernameNotFoundException("user not found");
+        throw new UsernameNotFoundException("User not found");
     }
 }

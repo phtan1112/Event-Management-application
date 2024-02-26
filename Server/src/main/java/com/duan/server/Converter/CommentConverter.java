@@ -6,6 +6,7 @@ import com.duan.server.DTO.UserDTO;
 import com.duan.server.Models.CommentEntity;
 import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.UserEntity;
+import com.duan.server.Response.CommentResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,21 @@ public class CommentConverter {
                 .stream()
                 .map(c-> toEntity(c))
                 .collect(Collectors.toList());
+    }
+
+    public List<CommentResponse> convertListCommentOfEventToCommentResponseDTO(List<CommentEntity> commentEntityList){
+        return commentEntityList
+                .stream()
+                .map(c->CommentResponse
+                        .builder()
+                        .id(c.getId())
+                        .content(c.getContent())
+                        .star(c.getStar())
+                        .createdAt(c.getCreatedAt())
+                        .user(userConverter.toDto(c.getUser()))
+                        .build())
+                .collect(Collectors.toList());
+        //test git again
     }
     public CommentEntity toEntity(CommentDTO commentDTO){
         CommentEntity commentEntity = new CommentEntity();

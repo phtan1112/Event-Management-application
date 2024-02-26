@@ -20,36 +20,38 @@ public class EventConverter {
     private CategoryConverter categoryConverter;
     @Autowired
     private CommentConverter commentConverter;
-    public Set<UserDTO> convertParticipatorsToDTO(Set<UserEntity> userEntities){
+
+    public Set<UserDTO> convertParticipatorsToDTO(Set<UserEntity> userEntities) {
         return userEntities
                 .stream()
-                .map(u-> userConverter.toDto(u))
+                .map(u -> userConverter.toDto(u))
                 .collect(Collectors.toSet());
     }
-    public Set<UserEntity> convertParticipatorsToEntity(Set<UserDTO> userDTOS){
+
+    public Set<UserEntity> convertParticipatorsToEntity(Set<UserDTO> userDTOS) {
         return userDTOS
                 .stream()
-                .map(u-> userConverter.toEntity(u))
+                .map(u -> userConverter.toEntity(u))
                 .collect(Collectors.toSet());
     }
 
     public EventEntity toEntity(EventDTO eventDTO) {
         EventEntity eventEntity = new EventEntity();
-        if(eventDTO.getId()!=null){
+        if (eventDTO.getId() != null) {
             eventEntity.setId(eventDTO.getId());
         }
         eventEntity.setTitle(eventDTO.getTitle());
         eventEntity.setDescription(eventDTO.getDescription());
-        if(eventDTO.getImage1()!=null){
+        if (eventDTO.getImage1() != null) {
             eventEntity.setImage1(eventDTO.getImage1());
         }
-        if(eventDTO.getImage2()!=null){
+        if (eventDTO.getImage2() != null) {
             eventEntity.setImage2(eventDTO.getImage2());
         }
-        if(eventDTO.getImage3()!=null){
+        if (eventDTO.getImage3() != null) {
             eventEntity.setImage3(eventDTO.getImage3());
         }
-        if(eventDTO.getImage4()!=null){
+        if (eventDTO.getImage4() != null) {
             eventEntity.setImage4(eventDTO.getImage4());
         }
         eventEntity.setPlace(eventDTO.getPlace());
@@ -60,7 +62,7 @@ public class EventConverter {
         eventEntity.setDate_start(eventDTO.getDate_start());
         eventEntity.setTime_start(eventDTO.getTime_start());
         eventEntity.setTime_end(eventDTO.getTime_end());
-        if(eventDTO.getCreatedAt() != null){
+        if (eventDTO.getCreatedAt() != null) {
             eventEntity.setCreatedAt(eventDTO.getCreatedAt());
         }
         eventEntity.setUser(userConverter.toEntity(eventDTO.getUser()));
@@ -69,24 +71,24 @@ public class EventConverter {
         return eventEntity;
     }
 
-    public EventDTO toDTO(EventEntity eventEntity){
-        EventDTO eventDTO =new EventDTO();
-        if(eventEntity != null){
-            if(eventEntity.getId() != null){
+    public EventDTO toDTO(EventEntity eventEntity) {
+        EventDTO eventDTO = new EventDTO();
+        if (eventEntity != null) {
+            if (eventEntity.getId() != null) {
                 eventDTO.setId(eventEntity.getId());
             }
             eventDTO.setTitle(eventEntity.getTitle());
             eventDTO.setDescription(eventEntity.getDescription());
-            if(eventEntity.getImage1()!=null){
+            if (eventEntity.getImage1() != null) {
                 eventDTO.setImage1(eventEntity.getImage1());
             }
-            if(eventEntity.getImage2()!=null){
+            if (eventEntity.getImage2() != null) {
                 eventDTO.setImage2(eventEntity.getImage2());
             }
-            if(eventEntity.getImage3()!=null){
+            if (eventEntity.getImage3() != null) {
                 eventDTO.setImage3(eventEntity.getImage3());
             }
-            if(eventEntity.getImage4()!=null){
+            if (eventEntity.getImage4() != null) {
                 eventDTO.setImage4(eventEntity.getImage4());
             }
             eventDTO.setPlace(eventEntity.getPlace());
@@ -108,63 +110,45 @@ public class EventConverter {
     }
 
     public ResponseEvent entityConvertToResponseEvent(EventEntity eventEntity) {
-        if(eventEntity.getStatus() != null){
-            return ResponseEvent
-                    .builder()
-                    .id(eventEntity.getId())
-                    .title(eventEntity.getTitle())
-                    .description(eventEntity.getDescription())
-                    .image1(eventEntity.getImage1())
-                    .image2(eventEntity.getImage2())
-                    .image3(eventEntity.getImage3())
-                    .image4(eventEntity.getImage4())
-                    .place(eventEntity.getPlace())
-                    .star(eventEntity.getStar())
-                    .latitude(eventEntity.getLatitude())
-                    .longitude(eventEntity.getLongitude())
-                    .cancel(eventEntity.getCancel())
-                    .date_start(eventEntity.getDate_start())
-                    .time_start(eventEntity.getTime_start())
-                    .time_end(eventEntity.getTime_end())
-                    .createAt(eventEntity.getCreatedAt())
-                    .user(userConverter.toDto(eventEntity.getUser()))
-                    .category(categoryConverter.toDTO(eventEntity.getCategory()))
-                    .responseStatus(ResponseStatus
+        ResponseEvent.ResponseEventBuilder responseEventBuilder =
+                ResponseEvent
+                        .builder()
+                        .id(eventEntity.getId())
+                        .title(eventEntity.getTitle())
+                        .description(eventEntity.getDescription())
+                        .image1(eventEntity.getImage1())
+                        .image2(eventEntity.getImage2())
+                        .image3(eventEntity.getImage3())
+                        .image4(eventEntity.getImage4())
+                        .place(eventEntity.getPlace())
+                        .star(eventEntity.getStar())
+                        .latitude(eventEntity.getLatitude())
+                        .longitude(eventEntity.getLongitude())
+                        .cancel(eventEntity.getCancel())
+                        .date_start(eventEntity.getDate_start())
+                        .time_start(eventEntity.getTime_start())
+                        .time_end(eventEntity.getTime_end())
+                        .createAt(eventEntity.getCreatedAt())
+                        .user(userConverter.toDto(eventEntity.getUser()))
+                        .category(categoryConverter.toDTO(eventEntity.getCategory()))
+                        .numberOfParticipators((int) eventEntity.getParticipators().stream().count())
+                        .participators(convertParticipatorsToDTO(eventEntity.getParticipators()))
+                        .comments(
+                                commentConverter.convertListCommentOfEventToCommentResponseDTO(
+                                        eventEntity.getComments()));
+
+        if (eventEntity.getStatus() != null) {
+            return responseEventBuilder
+                    .status(ResponseStatus
                             .builder()
                             .created(eventEntity.getStatus().getCreated())
                             .operating(eventEntity.getStatus().getOperating())
                             .ended(eventEntity.getStatus().getEnded())
                             .build())
-                    .numberOfParticipators((int) eventEntity.getParticipators().stream().count())
-                    .participators(convertParticipatorsToDTO(eventEntity.getParticipators()))
-                    .comments(commentConverter.convertListCommentOfEventToDTO(eventEntity.getComments()))
                     .build();
-        }
-        else{
-            return ResponseEvent
-                    .builder()
-                    .id(eventEntity.getId())
-                    .title(eventEntity.getTitle())
-                    .description(eventEntity.getDescription())
-                    .image1(eventEntity.getImage1())
-                    .image2(eventEntity.getImage2())
-                    .image3(eventEntity.getImage3())
-                    .image4(eventEntity.getImage4())
-                    .place(eventEntity.getPlace())
-                    .star(eventEntity.getStar())
-                    .latitude(eventEntity.getLatitude())
-                    .longitude(eventEntity.getLongitude())
-                    .cancel(eventEntity.getCancel())
-                    .date_start(eventEntity.getDate_start())
-                    .time_start(eventEntity.getTime_start())
-                    .time_end(eventEntity.getTime_end())
-                    .createAt(eventEntity.getCreatedAt())
-                    .user(userConverter.toDto(eventEntity.getUser()))
-                    .category(categoryConverter.toDTO(eventEntity.getCategory()))
-                    .responseStatus(null)
-                    .numberOfParticipators((int) eventEntity.getParticipators().stream().count())
-                    .participators(convertParticipatorsToDTO(eventEntity.getParticipators()))
-                    .comments(commentConverter.convertListCommentOfEventToDTO(eventEntity.getComments()))
+        } else {
+            return responseEventBuilder
+                    .status(null)
                     .build();
         }
 

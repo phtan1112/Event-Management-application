@@ -24,6 +24,7 @@ public class UserDTO {
     private LocalDate createdAt;
     private int login_times;
     private Set<EventDTO> list_events_saved = new HashSet<>();
+    private String token;
     public void addEventToSaveList(EventDTO e){
         if(list_events_saved == null){
             this.list_events_saved = new HashSet<>();

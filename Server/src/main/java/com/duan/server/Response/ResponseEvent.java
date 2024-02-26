@@ -39,8 +39,8 @@ public class ResponseEvent {
     private LocalDate  createAt;
     private UserDTO user;
     private CategoryDTO category;
-    private ResponseStatus responseStatus;
+    private ResponseStatus status;
     private int numberOfParticipators;
     private Set<UserDTO> participators = new HashSet<>();
-    private List<CommentDTO> comments = new ArrayList<>();
+    private List<CommentResponse> comments = new ArrayList<>();
 }

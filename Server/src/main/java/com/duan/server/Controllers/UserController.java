@@ -1,5 +1,6 @@
 package com.duan.server.Controllers;
 
+import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.LoginDto;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Request.ChangePasswordRequest;
@@ -15,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/user")
+@Transactional
 public class UserController {
     @Autowired
     private IUserService userService;
@@ -65,6 +68,7 @@ public class UserController {
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
@@ -103,7 +107,7 @@ public class UserController {
                 new ResponseEntity<>(new CodeAndMessage(1, "Not found user with email = "+ email), HttpStatus.BAD_REQUEST);
     }
 
-    @PutMapping("/{email}")
+    @PutMapping("/change-password/{email}")
     public ResponseEntity<?> changePassword(
             @RequestBody ChangePasswordRequest request,
             @PathVariable("email") String email) {
@@ -186,6 +190,26 @@ public class UserController {
                             "Upload fail cause email is not exist or image is too large or Invalid image file format.\" +\n" +
                             "!! please try again")
                     .build(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/all-event-saved")
+    public ResponseEntity<?> seeEventsSaved(){
+        try{
+            Set<EventDTO> lstEventSaved = userService.seeAllEventsSavedOfUser();
+
+            return !lstEventSaved.isEmpty() ?
+                    new ResponseEntity<>(lstEventSaved, HttpStatus.OK) :
+                    new ResponseEntity<>(new CodeAndMessage(1,
+                            "No event saved!!")
+                            , HttpStatus.BAD_REQUEST);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(CodeAndMessage.builder()
+                    .code(1)
+                    .message("error from server, please try again!!")
+                    .build(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

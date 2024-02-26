@@ -5,12 +5,14 @@ import com.duan.server.DTO.UserDTO;
 import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class UserConverter {
+
 
     @Autowired
     private EventConverter eventConverter;
@@ -42,7 +44,6 @@ public class UserConverter {
             userEntity.setCreatedAt(userDTO.getCreatedAt());
         }
         userEntity.setLogin_times(userDTO.getLogin_times());
-//        userEntity.setList_events_saved(convertEventSavedListToEntity(userDTO.getList_events_saved()));
         return userEntity;
     }
 
@@ -59,7 +60,6 @@ public class UserConverter {
         userDTO.setRole(userEntity.getRole());
         userDTO.setCreatedAt(userEntity.getCreatedAt());
         userDTO.setLogin_times(userEntity.getLogin_times());
-//        userDTO.setList_events_saved(convertEventSavedListToDTO(userEntity.getList_events_saved()));
         return userDTO;
     }
 }

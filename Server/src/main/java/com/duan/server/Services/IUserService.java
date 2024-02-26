@@ -1,9 +1,13 @@
 package com.duan.server.Services;
 
+import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.UserDTO;
+import com.duan.server.Response.ResponseEvent;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IUserService {
     String getUserEmailByAuthorization();
@@ -21,7 +25,7 @@ public interface IUserService {
     Boolean deleteAccount(String email);
 
     UserDTO uploadAvatarUserByEmail(String email, MultipartFile image);
-
+    Set<EventDTO> seeAllEventsSavedOfUser();
     UserDTO saveEventIntoEventSaveListByUser(int idEvent);
     UserDTO removeEventFromEventSavedList(int idEvent);
 }

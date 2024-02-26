@@ -196,7 +196,7 @@ public class EventService implements IEventService {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
         EventEntity eventEntity = eventRepository.findByIdAndUser(idEvent, userConverter.toEntity(userDTO));
-        if (eventEntity != null) {
+        if (eventEntity.getId() != null) {
             StatusEntity statusEntity = statusConverter.toEntity(
                     statusService.getStatusByEvent(findById(idEvent)));
 
@@ -216,7 +216,7 @@ public class EventService implements IEventService {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
         EventEntity eventEntity = eventRepository.findByIdAndUser(idEvent, userConverter.toEntity(userDTO));
-        if (eventEntity != null) {
+        if (eventEntity.getId() != null) {
             fields.forEach((key, value) -> {
                 String parseKey = (String) key;
 

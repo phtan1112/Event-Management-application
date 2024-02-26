@@ -118,7 +118,7 @@ public class EventController {
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Fail to get all event");
+                cm.setMessage("There are no events available");
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
@@ -126,7 +126,7 @@ public class EventController {
         }
     }
 
-    @GetMapping("/detail/{idEvent}") //id of event
+    @GetMapping("/detail/{idEvent}") //id of event, get event of this user created
     public ResponseEntity<?> getDetailEventByUserAndByIdEvent(
             @PathVariable("idEvent") Integer idEvent) {
         try {
@@ -188,7 +188,7 @@ public class EventController {
         }
     }
 
-    @PatchMapping("/{idEvent}/change-status")
+    @PatchMapping("/change-status/{idEvent}")
     public ResponseEntity<?> changeStatusOfEvent(
             @RequestBody Map<Object, Object> updates,
             @PathVariable("idEvent") int id) {
