@@ -49,7 +49,9 @@ public class CommentService implements ICommentService {
                 );
                 commentEntity = commentRepository.save(commentEntity);
                 eventService.calculateStarOfEvent(commentRequest.getEvent_id());
-                return commentConverter.toDto(commentEntity);
+                CommentDTO commentDTO =commentConverter.toDto(commentEntity);
+                commentDTO.setEvent(eventService.findById(eventDTO.getId()));
+                return commentDTO;
             }
 
         }

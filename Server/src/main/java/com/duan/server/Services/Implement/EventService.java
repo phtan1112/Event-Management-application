@@ -8,21 +8,21 @@ import com.duan.server.DTO.*;
 import com.duan.server.Models.CommentEntity;
 import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.StatusEntity;
-import com.duan.server.Models.UserEntity;
 import com.duan.server.Repository.EventRepository;
 import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IEventService;
+import org.apache.commons.math3.util.Precision;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 public class EventService implements IEventService {
@@ -56,7 +56,9 @@ public class EventService implements IEventService {
                                  LocalTime time_start,
                                  LocalTime time_end,
                                  String description,
-                                 String place, Double latitude, Double longitude) {
+                                 String place,
+                                 Double latitude,
+                                 Double longitude) {
 
         String emailUser = userService.getUserEmailByAuthorization();
 
@@ -64,46 +66,63 @@ public class EventService implements IEventService {
         UserDTO userDTO = userService.findUserByEmail(emailUser);
         //get userDTO by typeEvent
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
+        if (userDTO.getId() != null && categoryDTO.getId() != null &&
+                checkStartDateAndTimeStartIsAfterOrNot(date_start,time_start,time_end)) {
+            //get URL image after uploaded on Cloudinary
+            List<String> urls = Arrays.stream(images).map(image -> imageService.uploadImage(image)).toList();
 
-        //get URL image after uploaded on Cloudinary
-        List<String> urls = Arrays.stream(images).map(image -> imageService.uploadImage(image)).toList();
+            if (urls.size() == 4) {
+                EventDTO eventDTO = EventDTO.builder()
+                        .title(title)
+                        .description(description)
+                        .image1(urls.get(0))
+                        .image2(urls.get(1))
+                        .image3(urls.get(2))
+                        .image4(urls.get(3))
+                        .place(place)
+                        .latitude(latitude)
+                        .longitude(longitude)
+                        .star(0.0)
+                        .cancel(false)
+                        .date_start(date_start)
+                        .time_start(time_start)
+                        .time_end(time_end)
+                        .createdAt(LocalDate.now())
+                        .user(userDTO)
+                        .category(categoryDTO)
+                        .participators(new HashSet<>())
+                        .build();
 
-        if (userDTO != null && categoryDTO != null && urls.size() == 4) {
-            EventDTO eventDTO = EventDTO.builder()
-                    .title(title)
-                    .description(description)
-                    .image1(urls.get(0))
-                    .image2(urls.get(1))
-                    .image3(urls.get(2))
-                    .image4(urls.get(3))
-                    .place(place)
-                    .latitude(latitude)
-                    .longitude(longitude)
-                    .star(0)
-                    .cancel(false)
-                    .date_start(date_start)
-                    .time_start(time_start)
-                    .time_end(time_end)
-                    .createdAt(LocalDate.now())
-                    .user(userDTO)
-                    .category(categoryDTO)
-                    .participators(new HashSet<>())
-                    .build();
+                //persist to database
+                EventEntity eventEntity = eventConverter.toEntity(eventDTO);
+                eventEntity = eventRepository.save(eventEntity);
+                eventDTO = eventConverter.toDTO(eventEntity);
 
-            //persist to database
-            EventEntity eventEntity = eventConverter.toEntity(eventDTO);
-            eventEntity = eventRepository.save(eventEntity);
-            eventDTO = eventConverter.toDTO(eventEntity);
+                //generate status for event after created
+                StatusDTO statusDTO = statusService.generate(
+                        new StatusDTO(true, false, false, eventDTO));
+                statusDTO.setEvent(null);
+                eventDTO.setStatus(statusDTO);
 
-            //generate status for event after created
-            StatusDTO statusDTO = statusService.generate(
-                    new StatusDTO(true, false, false, eventDTO));
-            statusDTO.setEvent(null);
-            eventDTO.setStatus(statusDTO);
-
-            return eventDTO;
+                return eventDTO;
+            }
         }
         return null;
+    }
+
+    private boolean checkStartDateAndTimeStartIsAfterOrNot(LocalDate date_start,
+                                                           LocalTime time_start,
+                                                           LocalTime time_end) {
+        LocalDate date_now = LocalDate.now();
+        LocalTime time_now = LocalTime.now();
+        if ( (date_start.isAfter(date_now) || date_start.isEqual(date_now)) &&
+                time_start.isAfter(time_now) &&
+                time_end.isAfter(time_now) &&
+                time_end.isAfter(time_start)
+        ) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -115,7 +134,7 @@ public class EventService implements IEventService {
     @Override
     public StatusDTO findStatusByEvent(int idEvent) {
         EventDTO eventDTO = findById(idEvent);
-        if (eventDTO != null) {
+        if (eventDTO.getId() != null) {
             StatusDTO statusDTO = statusService.getStatusByEvent(eventDTO);
             return statusDTO;
         }
@@ -325,9 +344,11 @@ public class EventService implements IEventService {
     public ResponseEvent addUserToListOfParticipation(int idEvent, String email) {
         UserDTO userDTO = userService.findUserByEmail(email);
         EventDTO eventDTO = findById(idEvent);
-        if (    userDTO != null &&
-                eventDTO != null &&
-                !checkUserIsInParticipatorsOrNot(userDTO,eventDTO.getParticipators())) {
+        if (userDTO.getId() != null &&
+                eventDTO.getId() != null &&
+                !checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators()) &&
+                eventDTO.getUser().getId() != userDTO.getId()
+        ) {
 
             eventDTO.addUserDTO(userDTO);
             EventEntity eventEntity = eventConverter.toEntity(eventDTO);
@@ -349,16 +370,34 @@ public class EventService implements IEventService {
     @Override
     public void calculateStarOfEvent(int idEvent) {
         int count = 0;
-        int sum = 0;
+        Double sum = 0.0;
         EventEntity eventEntity = eventRepository.findById(idEvent);
-        for(CommentEntity commentEntity : eventEntity.getComments()){
+        for (CommentEntity commentEntity : eventEntity.getComments()) {
             sum += commentEntity.getStar();
             count += 1;
         }
-        if(count > 0){
-            eventEntity.setStar(sum/count);
+        if (count > 0) {
+            Double rs = Precision.round(sum / count,1);
+            eventEntity.setStar(rs);
             eventRepository.save(eventEntity);
         }
     }
+
+    @Override
+    public List<ResponseEvent> viewEventByUserAndStatus(int statusCode) {
+        String email = userService.getUserEmailByAuthorization();
+        return eventRepository
+                .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                .stream()
+                .filter(e ->{
+                    if(statusCode ==1) return e.getStatus().getCreated();
+                    if(statusCode ==2) return e.getStatus().getOperating();
+                    if(statusCode ==3) return e.getStatus().getEnded();
+                    return Boolean.parseBoolean(null);
+                        }
+                )
+                .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                .collect(Collectors.toList());
+    }//e.getStatus().getEnded()
 
 }

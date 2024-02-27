@@ -31,7 +31,7 @@ public class EventDTO {
     private String place;
     private Double latitude;
     private Double longitude;
-    private int star;
+    private Double star;
     private Boolean cancel; //true or false
     private LocalDate date_start;
     private LocalTime time_start;

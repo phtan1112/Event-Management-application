@@ -62,7 +62,7 @@ public class EventController {
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Fail caused create event");
+                cm.setMessage("Fail to create event!!");
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
     }
@@ -136,7 +136,7 @@ public class EventController {
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Do not find all event with id = " + idEvent);
+                cm.setMessage("Cannot get detail of event with id = " + idEvent );
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
@@ -282,12 +282,28 @@ public class EventController {
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Fail to add participator to event");
+                cm.setMessage("Fail to add participator to event" +
+                        " Because the owner is the same participator or id event and user email is incorrect!!");
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/view-event") //1 is created, 2 is operating, 3 is ended
+    public ResponseEntity<?> viewEventByUserAndStatus(
+            @Param("status") int statusCode
+    ){
+        List<ResponseEvent> result = eventService.viewEventByUserAndStatus(statusCode);
+        if (!result.isEmpty()) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            CodeAndMessage cm = new CodeAndMessage();
+            cm.setCode(1);
+            cm.setMessage("There are no events available");
+            return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
     }
 

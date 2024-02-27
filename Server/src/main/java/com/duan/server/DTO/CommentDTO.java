@@ -15,12 +15,12 @@ import java.time.LocalDateTime;
 public class CommentDTO {
     private Integer id;
     private String content;
-    private int star;
+    private Double star;
     private LocalDateTime createdAt;
     private UserDTO user;
     private EventDTO event;
 
-    public CommentDTO(String content, int star,  UserDTO user, EventDTO event) {
+    public CommentDTO(String content, double star,  UserDTO user, EventDTO event) {
         this.content = content;
         this.star = star;
         this.user = user;

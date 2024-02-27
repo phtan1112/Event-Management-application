@@ -15,6 +15,6 @@ import java.time.LocalDateTime;
 @Builder
 public class CommentRequest {
     private String content;
-    private int star;
+    private Double star;
     private int event_id;
 }

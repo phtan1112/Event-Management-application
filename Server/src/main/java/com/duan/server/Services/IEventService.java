@@ -44,4 +44,5 @@ public interface IEventService {
     Boolean checkUserIsInParticipatorsOrNot(UserDTO userDTO, Set<UserDTO> participators);
 
     void calculateStarOfEvent(int idEvent);
+    List<ResponseEvent> viewEventByUserAndStatus(int statusCode);
 }

@@ -26,6 +26,7 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,24 +82,29 @@ public class UserService implements IUserService, UserDetailsService {
             } else if (userDTO.getPassword().length() < 6) {
                 return null;
             }
-
             UserEntity userEntity = userConverter.toEntity(userDTO);
-            userEntity.setLogin_times(0);
+            userEntity.setLogin_times(1);
             userEntity.setRole("ROLE_USER");
             if (userEntity.getAvatar() == null) {
                 userEntity.setAvatar("https://res.cloudinary.com/dt7a2rxcl/image/upload/v1706802771/sqytlfts5l2ymqkfhb56.png");
             }
             userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-            userEntity.setCreatedAt(LocalDate.now());
+            userEntity.setCreatedAt(LocalDateTime.now());
+
+            String token = jwtService.generateToken(new CustomUserDetail(userEntity));
             userEntity = userRepository.save(userEntity);
-            return userConverter.toDto(userEntity);
+
+            System.out.println(userEntity);
+            UserDTO userDTO1 = userConverter.toDto(userEntity);
+            userDTO1.setToken(token);
+
+            return userDTO1;
         }
     }
 
     @Override
     public UserDTO findUserByEmail() {
         String email = getUserEmailByAuthorization();
-        System.out.println(email);
         UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity != null) {
             UserDTO userDTO = userConverter.toDto(userEntity);
@@ -130,7 +136,7 @@ public class UserService implements IUserService, UserDetailsService {
     }
 
     @Override
-    public UserDTO findUserByEmailAndPassword(String email, String password) {
+    public UserDTO findUserByEmailAndPassword(String email, String password) { //login
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 email,password
         ));
@@ -223,7 +229,7 @@ public class UserService implements IUserService, UserDetailsService {
     public UserDTO uploadAvatarUserByEmail(String email, MultipartFile image) {
         UserDTO userDTO = findUserByEmail(email);
         String emailFromAuthorization = getUserEmailByAuthorization();
-        if (userDTO != null) {
+        if (userDTO.getId() != null) {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
                 if (emailFromAuthorization.equals(email)) {

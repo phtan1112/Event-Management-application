@@ -28,11 +28,10 @@ public class UserEntity {
     private String email;
     private String password;
     private String avatar;
-    private Integer birthYear;
     private String role;
 
     @JsonFormat(pattern = "yy-MM-dd HH-mm")
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private int login_times;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY) //default la lazy
@@ -96,11 +95,10 @@ public class UserEntity {
         this.events_participate.add(e);
     }
 
-    public UserEntity(String fullName, String email, String password, Integer birthYear, String role,LocalDate createdAt) {
+    public UserEntity(String fullName, String email, String password,  String role,LocalDateTime createdAt) {
         this.fullName = fullName;
         this.email = email;
         this.password = password;
-        this.birthYear = birthYear;
         this.role = role;
         this.createdAt = createdAt;
     }

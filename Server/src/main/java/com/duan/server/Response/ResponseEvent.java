@@ -29,7 +29,7 @@ public class ResponseEvent {
     private String image3;
     private String image4;
     private String place;
-    private int star;
+    private Double star;
     private Double latitude;
     private Double longitude;
     private Boolean cancel; //true or false

@@ -68,7 +68,6 @@ public class UserController {
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
@@ -180,7 +179,7 @@ public class UserController {
             return userDTO != null ?
                     new ResponseEntity<>(new ResponseUser(0,"Upload avatar successful",userDTO), HttpStatus.OK) :
                     new ResponseEntity<>(new CodeAndMessage(1,
-                            "Not found user or authorization is not correct account")
+                            "Not found user or the authorization is not correct account")
                             , HttpStatus.BAD_REQUEST);
 
         }catch (Exception e){

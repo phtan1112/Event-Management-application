@@ -21,7 +21,7 @@ public class CommentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private String content;
-    private int star;
+    private Double star;
     private LocalDateTime createdAt;
 
     @ManyToOne
@@ -34,7 +34,7 @@ public class CommentEntity {
     @JsonManagedReference
     private EventEntity event;
 
-    public CommentEntity(String content, int star, LocalDateTime createdAt, UserEntity user, EventEntity event) {
+    public CommentEntity(String content, double star, LocalDateTime createdAt, UserEntity user, EventEntity event) {
         this.content = content;
         this.star = star;
         this.createdAt = createdAt;

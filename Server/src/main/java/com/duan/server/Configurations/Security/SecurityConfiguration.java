@@ -65,16 +65,13 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET,"/api/v1/event/filter/**").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.GET,"/api/v1/event/search/**").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.POST,"/api/v1/event/add-participator").hasAuthority("ROLE_USER")
-
-
+                        .requestMatchers(HttpMethod.GET,"/api/v1/event/view-event/**").hasAuthority("ROLE_USER")
                         //comment
                         .requestMatchers(HttpMethod.POST,"/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
-
                         //disallow everything else
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
-//                .httpBasic(Customizer.withDefaults()) // -> use for basic auth Authorization
                 //below for JWT
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider()).addFilterBefore(
@@ -106,6 +103,7 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("*"));
+        configuration.setMaxAge(3600L);
         configuration.setAllowedHeaders(List.of("*"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -2,6 +2,7 @@ package com.duan.server.DTO;
 
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -19,9 +20,8 @@ public class UserDTO {
     private String email;
     private String password;
     private String avatar;
-    private Integer birthYear;
     private String role;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private int login_times;
     private Set<EventDTO> list_events_saved = new HashSet<>();
     private String token;
@@ -32,11 +32,10 @@ public class UserDTO {
         this.list_events_saved.add(e);
     }
 
-    public UserDTO(String fullName, String email, String password, Integer birthYear) {
+    public UserDTO(String fullName, String email, String password) {
         this.fullName = fullName;
         this.email = email;
         this.password = password;
-        this.birthYear = birthYear;
     }
 
 

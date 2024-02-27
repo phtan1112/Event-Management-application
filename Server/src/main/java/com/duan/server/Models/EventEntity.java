@@ -42,7 +42,7 @@ public class EventEntity {
 
     private Double latitude;
     private Double longitude;
-    private int star;
+    private Double star;
 
     @Column(
             nullable = false

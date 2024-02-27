@@ -20,7 +20,7 @@ public class JWTService {
     public String generateToken(UserDetails userDetails){
         return Jwts.builder().setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 30L * 24L * 60L * 60L * 1000L)) // one month
+                .setExpiration(new Date(System.currentTimeMillis() + 7L * 24L * 60L * 60L * 1000L)) // 7 days
                 .signWith(getSigninKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
