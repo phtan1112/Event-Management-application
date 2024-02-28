@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -67,7 +68,7 @@ public class EventService implements IEventService {
         //get userDTO by typeEvent
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
         if (userDTO.getId() != null && categoryDTO.getId() != null &&
-                checkStartDateAndTimeStartIsAfterOrNot(date_start,time_start,time_end)) {
+                checkStartDateAndTimeStartIsAfterOrNot(date_start, time_start, time_end)) {
             //get URL image after uploaded on Cloudinary
             List<String> urls = Arrays.stream(images).map(image -> imageService.uploadImage(image)).toList();
 
@@ -115,7 +116,7 @@ public class EventService implements IEventService {
                                                            LocalTime time_end) {
         LocalDate date_now = LocalDate.now();
         LocalTime time_now = LocalTime.now();
-        if ( (date_start.isAfter(date_now) || date_start.isEqual(date_now)) &&
+        if ((date_start.isAfter(date_now) || date_start.isEqual(date_now)) &&
                 time_start.isAfter(time_now) &&
                 time_end.isAfter(time_now) &&
                 time_end.isAfter(time_start)
@@ -377,27 +378,187 @@ public class EventService implements IEventService {
             count += 1;
         }
         if (count > 0) {
-            Double rs = Precision.round(sum / count,1);
+            Double rs = Precision.round(sum / count, 1);
             eventEntity.setStar(rs);
             eventRepository.save(eventEntity);
         }
     }
 
     @Override
-    public List<ResponseEvent> viewEventByUserAndStatus(int statusCode) {
+    public List<ResponseEvent> viewEventByUserAndStatus(Integer statusCode,
+                                                        Integer starStart, Integer starEnd,
+                                                        Integer typeOfDate,
+                                                        LocalDate dateStart, LocalDate dateEnd) {
         String email = userService.getUserEmailByAuthorization();
-        return eventRepository
-                .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
-                .stream()
-                .filter(e ->{
-                    if(statusCode ==1) return e.getStatus().getCreated();
-                    if(statusCode ==2) return e.getStatus().getOperating();
-                    if(statusCode ==3) return e.getStatus().getEnded();
-                    return Boolean.parseBoolean(null);
-                        }
-                )
-                .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                .collect(Collectors.toList());
-    }//e.getStatus().getEnded()
+        List<ResponseEvent> filterEvents = null;
+
+        if (statusCode != null && starStart != null && starEnd != null &&
+                typeOfDate == null && dateStart == null && dateEnd == null
+        ) {// filter by statusCode, star
+            if (statusCode >= 1 && statusCode <= 3 &&
+                    starStart >= 0 && starStart <= 4 &&
+                    starEnd <= 5 && starEnd >= 1
+                    && starEnd > starStart
+            ) {
+                filterEvents = eventRepository
+                        .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                        .stream()
+                        .filter(e -> {
+                                    if (statusCode == 1)
+                                        return e.getStatus().getCreated() && e.getStar() >= starStart && e.getStar() <= starEnd;
+                                    if (statusCode == 2)
+                                        return e.getStatus().getOperating() && e.getStar() >= starStart && e.getStar() <= starEnd;
+                                    if (statusCode == 3)
+                                        return e.getStatus().getEnded() && e.getStar() >= starStart && e.getStar() <= starEnd;
+                                    return Boolean.parseBoolean(null);
+
+                                }
+                        )
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
+        } else if (statusCode != null && starStart == null && starEnd == null &&
+                typeOfDate == null && dateStart == null && dateEnd == null
+        ) {// filter by status code
+            filterEvents = eventRepository
+                    .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                    .stream()
+                    .filter(e -> {
+
+                                if (statusCode == 1) return e.getStatus().getCreated();
+                                if (statusCode == 2) return e.getStatus().getOperating();
+                                if (statusCode == 3) return e.getStatus().getEnded();
+                                return Boolean.parseBoolean(null);
+                            }
+                    )
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+        } else if (statusCode == null && starEnd != null && starStart != null &&
+                typeOfDate == null && dateStart == null && dateEnd == null
+        ) {// filter by star
+            if (starStart >= 0 && starStart <= 4 &&
+                    starEnd <= 5 && starEnd >= 1
+                    && starEnd > starStart) {
+                filterEvents = eventRepository
+                        .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                        .stream()
+                        .filter(e -> e.getStar() >= starStart && e.getStar() <= starEnd
+                        )
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
+        } else if (statusCode == null && starStart == null && starEnd == null &&
+                typeOfDate != null && dateStart == null && dateEnd == null
+        ) { // filter by typeOfDate || //today(1), yesterday(2), within7days(3),thisMonth(4)
+            if (typeOfDate >= 1 && typeOfDate <= 4) {
+                LocalDate currentDate = LocalDate.now();
+                if (typeOfDate == 1) { //today
+                    filterEvents = eventRepository
+                            .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                            .stream()
+                            .filter(e -> e.getCreatedAt().isEqual(LocalDate.now()))
+
+                            .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                            .collect(Collectors.toList());
+                }
+                if (typeOfDate == 2) { //yesterday
+                    filterEvents = eventRepository
+                            .findAllByUser(
+                                    userConverter.toEntity(userService.findUserByEmail(email)))
+                            .stream()
+                            .filter(e -> e.getCreatedAt().isEqual(LocalDate.now().minusDays(1)))
+                            .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                            .collect(Collectors.toList());
+                }
+                if (typeOfDate == 3) { //within7days
+                    filterEvents = eventRepository
+                            .findAllByUser(
+                                    userConverter.toEntity(userService.findUserByEmail(email)))
+                            .stream()
+                            .filter(e -> e.getCreatedAt().isAfter(LocalDate.now().minusDays(7))
+                                    || e.getCreatedAt().isEqual(LocalDate.now())
+                            )
+                            .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                            .sorted(Comparator.comparing(e -> e.getCreateAt()))
+                            .collect(Collectors.toList());
+                }
+                if (typeOfDate == 4) { //thismonth
+                    LocalDate thisMonth = LocalDate.of(
+                            currentDate.getYear(),
+                            currentDate.getMonth(),
+                            1);
+
+                    filterEvents = eventRepository
+                            .findAllByUser(
+                                    userConverter.toEntity(userService.findUserByEmail(email)))
+                            .stream()
+                            .filter(e -> e.getCreatedAt().isAfter(thisMonth) || e.getCreatedAt().isEqual(thisMonth)
+                            )
+                            .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                            .sorted(Comparator.comparing(e -> e.getCreateAt()))
+                            .collect(Collectors.toList());
+                }
+
+            }
+        } else if (statusCode == null && starStart == null && starEnd == null &&
+                typeOfDate == null && dateStart != null && dateEnd != null
+        ) { // specific period of date
+            LocalDate currentDate = LocalDate.now();
+            if (dateStart.isBefore(currentDate.plusDays(1)) &&
+                    (dateEnd.isBefore(currentDate) || dateEnd.isEqual(currentDate))&&
+                    dateStart.isBefore(dateEnd)
+            ) {
+                filterEvents = eventRepository
+                        .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                        .stream()
+                        .filter(e -> e.getCreatedAt().isAfter(dateStart) &&
+                                (e.getCreatedAt().isBefore(dateEnd) || e.getCreatedAt().isEqual(dateEnd))
+                        )
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .sorted(Comparator.comparing(e -> e.getCreateAt()))
+                        .collect(Collectors.toList());
+            }
+        } else if (statusCode != null && starStart != null && starEnd != null &&
+                typeOfDate == null && dateStart != null && dateEnd != null
+        ) { // filter by (star,status, dateStart, DateEnd)
+            LocalDate currentDate = LocalDate.now();
+            if (statusCode >= 1 && statusCode <= 3 &&
+                    starStart >= 0 && starStart <= 4 &&
+                    starEnd <= 5 && starEnd >= 1
+                    && starEnd > starStart &&
+                    dateStart.isBefore(currentDate.plusDays(1)) &&
+                    (dateEnd.isBefore(currentDate) || dateEnd.isEqual(currentDate)) &&
+                    dateStart.isBefore(dateEnd)
+            ) {
+                filterEvents = eventRepository
+                        .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                        .stream()
+                        .filter(e -> {
+                                    if (statusCode == 1)
+                                        return e.getStatus().getCreated() &&
+                                                e.getStar() >= starStart && e.getStar() <= starEnd &&
+                                                e.getCreatedAt().isAfter(dateStart) &&
+                                                (e.getCreatedAt().isBefore(dateEnd) || e.getCreatedAt().isEqual(dateEnd))
+                                                ;
+                                    if (statusCode == 2)
+                                        return e.getStatus().getOperating() &&
+                                                e.getStar() >= starStart && e.getStar() <= starEnd &&
+                                                e.getCreatedAt().isAfter(dateStart) &&
+                                                (e.getCreatedAt().isBefore(dateEnd) || e.getCreatedAt().isEqual(dateEnd));
+                                    if (statusCode == 3)
+                                        return e.getStatus().getEnded() &&
+                                                e.getStar() >= starStart && e.getStar() <= starEnd &&
+                                                e.getCreatedAt().isAfter(dateStart) &&
+                                                (e.getCreatedAt().isBefore(dateEnd) || e.getCreatedAt().isEqual(dateEnd));
+                                    return Boolean.parseBoolean(null);
+                                }
+                        )
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .sorted(Comparator.comparing(e -> e.getStar()))
+                        .collect(Collectors.toList());
+            }
+        }
+        return filterEvents != null ? filterEvents : new ArrayList<>();
+    }
 
 }

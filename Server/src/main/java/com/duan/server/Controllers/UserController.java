@@ -55,7 +55,7 @@ public class UserController {
         try {
             UserDTO userDTO = userService.findUserByEmailAndPassword(loginDto.getEmail(),
                     loginDto.getPassword());
-            if (userDTO != null) {
+            if (userDTO.getId() != null) {
                 ResponseUser ru = new ResponseUser();
                 ru.setCode(0); //success
                 ru.setMessage("login successfully");

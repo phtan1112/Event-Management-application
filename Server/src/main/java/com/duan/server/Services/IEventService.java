@@ -5,6 +5,9 @@ import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.StatusDTO;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Response.ResponseEvent;
+import jakarta.annotation.Nullable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -44,5 +47,8 @@ public interface IEventService {
     Boolean checkUserIsInParticipatorsOrNot(UserDTO userDTO, Set<UserDTO> participators);
 
     void calculateStarOfEvent(int idEvent);
-    List<ResponseEvent> viewEventByUserAndStatus(int statusCode);
+    List<ResponseEvent> viewEventByUserAndStatus(Integer statusCode,
+                                                 Integer starStart,Integer starEnd,
+                                                 Integer typeOfDate,
+                                                 LocalDate dateStart, LocalDate dateEnd);
 }

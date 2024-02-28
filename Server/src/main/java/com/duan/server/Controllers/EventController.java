@@ -9,6 +9,7 @@ import com.duan.server.Services.Implement.EventService;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ public class EventController {
                                          @RequestParam("place") String place,
                                          @RequestParam("latitude") Double latitude,
                                          @RequestParam("longitude") Double longitude
-                                         ) {
+    ) {
 
 
         EventDTO eventDTO = eventService.persistEvent(
@@ -50,21 +51,21 @@ public class EventController {
                 time_start,
                 time_end,
                 description,
-                place,latitude,longitude );
+                place, latitude, longitude);
         if (eventDTO != null) {
-                return new ResponseEntity<>(
-                        ResponseObject
-                                .builder()
-                                .code(0)
-                                .message("create event successful")
-                                .object(eventDTO)
-                                .build(), HttpStatus.OK);
-            } else {
-                CodeAndMessage cm = new CodeAndMessage();
-                cm.setCode(1);
-                cm.setMessage("Fail to create event!!");
-                return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
-            }
+            return new ResponseEntity<>(
+                    ResponseObject
+                            .builder()
+                            .code(0)
+                            .message("create event successful")
+                            .object(eventDTO)
+                            .build(), HttpStatus.OK);
+        } else {
+            CodeAndMessage cm = new CodeAndMessage();
+            cm.setCode(1);
+            cm.setMessage("Fail to create event!!");
+            return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+        }
     }
 
 
@@ -109,8 +110,9 @@ public class EventController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping("/all-events")
-    public ResponseEntity<?> responseAllEvents(){
+    public ResponseEntity<?> responseAllEvents() {
         try {
             List<ResponseEvent> lstDto = eventService.getAllEvents();
             if (!lstDto.isEmpty()) {
@@ -136,7 +138,7 @@ public class EventController {
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Cannot get detail of event with id = " + idEvent );
+                cm.setMessage("Cannot get detail of event with id = " + idEvent);
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
@@ -229,7 +231,7 @@ public class EventController {
 
     @GetMapping("/filter") // filter event by category
     public ResponseEntity<?> filterEventByCategory(
-            @Param("category") String category){
+            @Param("category") String category) {
         try {
             List<ResponseEvent> result = eventService.filterByCategory(category);
             if (!result.isEmpty()) {
@@ -249,13 +251,12 @@ public class EventController {
     public ResponseEntity<?> filterEventByCategoryAndTitleEvent(
             @Nullable @Param("category") String category,
             @Param("title") String title
-            ){
+    ) {
         try {
             List<ResponseEvent> result;
-            if(category != null){
-                result  = eventService.filterByCategoryAndTitle(category,title);
-            }
-            else{
+            if (category != null) {
+                result = eventService.filterByCategoryAndTitle(category, title);
+            } else {
                 result = eventService.filterByTitleContaining(title);
             }
             if (!result.isEmpty()) {
@@ -273,7 +274,7 @@ public class EventController {
 
     @PostMapping("/add-participator")
     public ResponseEntity<?> addParticipatorOfEvent(
-            @RequestBody ParticipatorEventRequest participatorEventRequest){
+            @RequestBody ParticipatorEventRequest participatorEventRequest) {
         try {
             ResponseEvent result = eventService.addUserToListOfParticipation(
                     participatorEventRequest.getIdEvent(), participatorEventRequest.getEmail());
@@ -294,9 +295,24 @@ public class EventController {
 
     @GetMapping("/view-event") //1 is created, 2 is operating, 3 is ended
     public ResponseEntity<?> viewEventByUserAndStatus(
-            @Param("status") int statusCode
-    ){
-        List<ResponseEvent> result = eventService.viewEventByUserAndStatus(statusCode);
+            @Nullable @RequestParam("statusCode") Integer statusCode, // [1,3]
+            @Nullable @RequestParam("starStart") Integer starStart, // [0,4]
+            @Nullable @RequestParam("starEnd") Integer starEnd, // [1,5]
+            @Nullable @RequestParam("typeOfDate") Integer typeOfDate,//today(1),yesterday(2),within7days(3),thismonth(4)
+            @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateStart") LocalDate dateStart,
+            @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateEnd") LocalDate dateEnd
+            //date for createAt
+    ) {
+        
+        List<ResponseEvent> result =
+                eventService.viewEventByUserAndStatus(
+                        statusCode,
+                        starStart,
+                        starEnd,
+                        typeOfDate,
+                        dateStart,dateEnd
+
+                );
         if (!result.isEmpty()) {
             return new ResponseEntity<>(result, HttpStatus.OK);
         } else {
