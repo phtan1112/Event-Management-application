@@ -86,7 +86,7 @@ public class UserService implements IUserService, UserDetailsService {
             userEntity.setLogin_times(1);
             userEntity.setRole("ROLE_USER");
             if (userEntity.getAvatar() == null) {
-                userEntity.setAvatar("https://res.cloudinary.com/dt7a2rxcl/image/upload/v1706802771/sqytlfts5l2ymqkfhb56.png");
+                userEntity.setAvatar("https://res.cloudinary.com/dt7a2rxcl/image/upload/v1709138703/defaultAvtUser_vfuca0.jpg");
             }
             userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             userEntity.setCreatedAt(LocalDateTime.now());
@@ -94,7 +94,6 @@ public class UserService implements IUserService, UserDetailsService {
             String token = jwtService.generateToken(new CustomUserDetail(userEntity));
             userEntity = userRepository.save(userEntity);
 
-            System.out.println(userEntity);
             UserDTO userDTO1 = userConverter.toDto(userEntity);
             userDTO1.setToken(token);
 
@@ -196,7 +195,14 @@ public class UserService implements IUserService, UserDetailsService {
             if (roleAuth.equals("ROLE_USER")) {
                 if (getUserEmailByAuthorization().equals(email)) {
                     fields.forEach((key, value) -> {
-                        Field field = ReflectionUtils.findField(UserEntity.class, (String) key);
+                        String parseKey = (String) key;
+
+                        if (parseKey.equalsIgnoreCase("password")) {
+                            value = passwordEncoder.encode((CharSequence) value);
+                        }
+
+
+                        Field field = ReflectionUtils.findField(UserEntity.class, parseKey);
                         field.setAccessible(true);
                         ReflectionUtils.setField(field, userEntity, value);
                     });

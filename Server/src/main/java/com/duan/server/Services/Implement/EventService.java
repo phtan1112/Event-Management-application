@@ -67,6 +67,7 @@ public class EventService implements IEventService {
         UserDTO userDTO = userService.findUserByEmail(emailUser);
         //get userDTO by typeEvent
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
+
         if (userDTO.getId() != null && categoryDTO.getId() != null &&
                 checkStartDateAndTimeStartIsAfterOrNot(date_start, time_start, time_end)) {
             //get URL image after uploaded on Cloudinary
@@ -116,11 +117,7 @@ public class EventService implements IEventService {
                                                            LocalTime time_end) {
         LocalDate date_now = LocalDate.now();
         LocalTime time_now = LocalTime.now();
-        if ((date_start.isAfter(date_now) || date_start.isEqual(date_now)) &&
-                time_start.isAfter(time_now) &&
-                time_end.isAfter(time_now) &&
-                time_end.isAfter(time_start)
-        ) {
+        if ((date_start.isAfter(date_now) || date_start.isEqual(date_now))) {
             return true;
         }
         return false;
