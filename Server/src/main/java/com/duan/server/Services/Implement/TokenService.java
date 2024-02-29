@@ -34,7 +34,7 @@ public class TokenService {
     }
 
     public int countAllTokenByUser(UserEntity user){
-        return tokenRepository.countAllByUser(user);
+        return tokenRepository.findAllByUserAndExpiredAndRevoked(user,false,false).size();
     }
 
 }
