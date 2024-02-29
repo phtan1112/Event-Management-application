@@ -19,7 +19,6 @@ import java.util.*;
 @Getter
 @Setter
 @ToString
-
 public class EventEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

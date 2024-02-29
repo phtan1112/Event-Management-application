@@ -6,7 +6,9 @@ import com.duan.server.Converter.EventConverter;
 import com.duan.server.Converter.UserConverter;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.UserDTO;
+import com.duan.server.Models.Token;
 import com.duan.server.Models.UserEntity;
+import com.duan.server.Repository.TokenRepository;
 import com.duan.server.Repository.UserRepository;
 import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IUserService;
@@ -57,6 +59,8 @@ public class UserService implements IUserService, UserDetailsService {
     @Autowired
     private JWTService jwtService;
 
+    @Autowired
+    private TokenService tokenService;
 
     @Override
     public String getUserEmailByAuthorization() {
@@ -93,6 +97,8 @@ public class UserService implements IUserService, UserDetailsService {
 
             String token = jwtService.generateToken(new CustomUserDetail(userEntity));
             userEntity = userRepository.save(userEntity);
+
+            tokenService.saveUserEntityIntoToken(userEntity, token);
 
             UserDTO userDTO1 = userConverter.toDto(userEntity);
             userDTO1.setToken(token);
@@ -145,9 +151,18 @@ public class UserService implements IUserService, UserDetailsService {
 
         String token = jwtService.generateToken(new CustomUserDetail(userEntity));
         UserDTO userDTO = userConverter.toDto(userEntity);
+
+        int numberToken = tokenService.countAllTokenByUser(userEntity);
+        if(numberToken > 2){
+            tokenService.revokeAndSetExpiredTokenOfUser(userEntity);
+        }
+        tokenService.saveUserEntityIntoToken(userEntity,token);
+
+
         userDTO.setList_events_saved(
                 userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
         userDTO.setToken(token);
+
         return userDTO;
     }
 

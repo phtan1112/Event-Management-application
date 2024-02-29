@@ -51,4 +51,5 @@ public interface IEventService {
                                                  Integer starStart,Integer starEnd,
                                                  Integer typeOfDate,
                                                  LocalDate dateStart, LocalDate dateEnd);
+    List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays);
 }

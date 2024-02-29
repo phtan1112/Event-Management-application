@@ -73,7 +73,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/logout") //remove token
     public ResponseEntity<CodeAndMessage> logout() {
         ResponseEntity<CodeAndMessage> res = null;
         CodeAndMessage ru = new CodeAndMessage();

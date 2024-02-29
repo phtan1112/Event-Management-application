@@ -13,6 +13,7 @@ import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IEventService;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
@@ -557,5 +558,24 @@ public class EventService implements IEventService {
         }
         return filterEvents != null ? filterEvents : new ArrayList<>();
     }
+
+    @Override
+    public List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays) {
+        String email = userService.getUserEmailByAuthorization();
+        LocalDate currentDate = LocalDate.now();
+        LocalDate filterDate = currentDate.plusDays(numberDays+1);
+        System.out.println(filterDate);
+        return eventRepository
+                .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
+                .stream()
+                .filter(e ->
+                        e.getDate_start().isBefore(filterDate)
+                        && ( e.getDate_start().isAfter(currentDate) || e.getDate_start().isEqual(currentDate))
+                )
+                .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                .sorted(Comparator.comparing(e -> e.getDate_start()))
+                .collect(Collectors.toList());
+    }
+
 
 }

@@ -322,6 +322,22 @@ public class EventController {
             return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
     }
+    @GetMapping("/event-upcoming") //1 is created, 2 is operating, 3 is ended
+    public ResponseEntity<?> viewEventByUserAndStatus(
+            @Nullable @RequestParam("number-days") Integer dayUpcoming // before current date
+    ) {
+
+        List<ResponseEvent> result =
+                eventService.viewUpcomingEventByDateStart(dayUpcoming);
+        if (!result.isEmpty()) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            CodeAndMessage cm = new CodeAndMessage();
+            cm.setCode(1);
+            cm.setMessage("There are no events available");
+            return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+        }
+    }
 
 }
 

@@ -11,6 +11,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.Phaser;
 
 @Entity
 @Table(name ="tblUser")
@@ -72,6 +73,11 @@ public class UserEntity {
     @JsonManagedReference
     @ToString.Exclude
     private Set<EventEntity> list_events_saved = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY) //default is lazy
+    @JsonBackReference
+    @ToString.Exclude
+    private Set<Token> tokens = new HashSet<>();
 
     public void addEventToSaveList(EventEntity e){
         if(list_events_saved == null){

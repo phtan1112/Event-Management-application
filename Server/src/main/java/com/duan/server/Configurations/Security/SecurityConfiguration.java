@@ -66,6 +66,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET,"/api/v1/event/search/**").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.POST,"/api/v1/event/add-participator").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.GET,"/api/v1/event/view-event/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.GET,"/api/v1/event/event-upcoming/**").hasAuthority("ROLE_USER")
                         //comment
                         .requestMatchers(HttpMethod.POST,"/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         //disallow everything else

@@ -1,5 +1,6 @@
 package com.duan.server.Configurations.Security;
 
+import com.duan.server.Repository.TokenRepository;
 import com.duan.server.Services.Implement.UserService;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.FilterChain;
@@ -24,6 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private TokenRepository tokenRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -45,7 +48,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             UserDetails userDetails = userService.loadUserByUsername(userEmail);
 
-            if(jwtService.isTokenValid(jwt, userDetails)){
+            boolean isTokenValid = tokenRepository.findByToken(jwt)
+                    .map(t -> !t.isExpired() && !t.isRevoked())
+                    .orElse(false);
+
+            if(jwtService.isTokenValid(jwt, userDetails) && isTokenValid){
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken  =
