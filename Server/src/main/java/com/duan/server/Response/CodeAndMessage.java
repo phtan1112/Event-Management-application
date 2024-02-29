@@ -12,4 +12,6 @@ import lombok.*;
 public class CodeAndMessage {
     private int code;
     private String message;
+
+
 }

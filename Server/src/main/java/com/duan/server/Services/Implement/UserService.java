@@ -30,9 +30,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements IUserService, UserDetailsService {
@@ -134,6 +136,26 @@ public class UserService implements IUserService, UserDetailsService {
     }
 
     @Override
+    public UserDTO restorePassword(String email, String password) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity.getId() != null && password.length() >= 6) {
+            userEntity.setPassword(passwordEncoder.encode(password));
+
+            String token = jwtService.generateToken(new CustomUserDetail(userEntity));
+
+            userEntity = userRepository.save(userEntity);
+
+            tokenService.revokeAndSetExpiredTokenOfUser(userEntity);
+            tokenService.saveUserEntityIntoToken(userEntity, token);
+
+            UserDTO userDTO = userConverter.toDto(userEntity);
+            userDTO.setToken(token);
+            return userDTO;
+        }
+        return null;
+    }
+
+    @Override
     public UserDTO getDetailUserByAdmin(String email) {
         if (getRoleUser().equals("ROLE_ADMIN")) {
             return findUserByEmail(email);
@@ -153,10 +175,10 @@ public class UserService implements IUserService, UserDetailsService {
         UserDTO userDTO = userConverter.toDto(userEntity);
 
         int numberToken = tokenService.countAllTokenByUser(userEntity);
-        if(numberToken > 2){
+        if (numberToken > 2) {
             tokenService.revokeAndSetExpiredTokenOfUser(userEntity);
         }
-        tokenService.saveUserEntityIntoToken(userEntity,token);
+        tokenService.saveUserEntityIntoToken(userEntity, token);
 
 
         userDTO.setList_events_saved(
@@ -272,7 +294,6 @@ public class UserService implements IUserService, UserDetailsService {
     public Set<EventDTO> seeAllEventsSavedOfUser() {
         UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
         Set<EventDTO> list_saved = userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved());
-
         return list_saved;
     }
 

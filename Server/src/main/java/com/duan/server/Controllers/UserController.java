@@ -4,6 +4,7 @@ import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.LoginDto;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Request.ChangePasswordRequest;
+import com.duan.server.Request.RestorePasswordRequest;
 import com.duan.server.Response.CodeAndMessage;
 import com.duan.server.Response.ResponseUser;
 import com.duan.server.Services.IUserService;
@@ -31,7 +32,7 @@ public class UserController {
         try {
             UserDTO userDTO1 = userService.persist(userDTO);
             if (userDTO1 != null) {
-
+                userDTO1.setPassword("********************");
                 ResponseUser ru = new ResponseUser();
                 ru.setCode(0); //success
                 ru.setMessage("Register user successfully");
@@ -56,6 +57,7 @@ public class UserController {
             UserDTO userDTO = userService.findUserByEmailAndPassword(loginDto.getEmail(),
                     loginDto.getPassword());
             if (userDTO.getId() != null) {
+                userDTO.setPassword("********************");
                 ResponseUser ru = new ResponseUser();
                 ru.setCode(0); //success
                 ru.setMessage("login successfully");
@@ -72,6 +74,7 @@ public class UserController {
 
         }
     }
+
 
     @GetMapping("/logout") //remove token
     public ResponseEntity<CodeAndMessage> logout() {
@@ -90,7 +93,7 @@ public class UserController {
     @GetMapping("/get-info")
     public ResponseEntity<?> getUserInfoByEmail() {
         UserDTO userDTO = userService.findUserByEmail();
-
+        if(userDTO != null) userDTO.setPassword("********************");
         return userDTO != null ?
                 new ResponseEntity<>(userDTO, HttpStatus.OK) :
                 new ResponseEntity<>(new CodeAndMessage(1,
@@ -100,7 +103,7 @@ public class UserController {
     @GetMapping("/get-detail-by-admin/{email}")
     public ResponseEntity<?> getInfoUserByAdmin(@PathVariable("email") String email) {
         UserDTO userDTO = userService.getDetailUserByAdmin(email);
-
+        if(userDTO != null) userDTO.setPassword("********************");
         return userDTO != null ?
                 new ResponseEntity<>(userDTO, HttpStatus.OK) :
                 new ResponseEntity<>(new CodeAndMessage(1, "Not found user with email = "+ email), HttpStatus.BAD_REQUEST);
@@ -125,6 +128,28 @@ public class UserController {
             }
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @PutMapping("/restore-password")
+    public ResponseEntity<?> restoreUserPassword(@RequestBody RestorePasswordRequest restorePasswordRequest){
+        UserDTO userDTO = userService.restorePassword(
+                restorePasswordRequest.getEmail(),
+                restorePasswordRequest.getPassword());
+
+        if (userDTO != null) {
+            userDTO.setPassword("********************");
+            ResponseUser ru = new ResponseUser();
+            ru.setCode(0); //success
+            ru.setMessage("Restore password of user successfully");
+            ru.setUserDTO(userDTO);
+            return new ResponseEntity<>(ru, HttpStatus.OK);
+        }
+        else {
+            CodeAndMessage cm = new CodeAndMessage();
+            cm.setCode(1); //invalid email, password
+            cm.setMessage("cannot restore password of account " +
+                    "because cannot find the email or the password do not have 6 character!!");
+            return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -175,6 +200,7 @@ public class UserController {
                                               @RequestParam("email") String email){
         try{
             UserDTO userDTO = userService.uploadAvatarUserByEmail(email,image);
+            if(userDTO != null) userDTO.setPassword(("********************"));
 
             return userDTO != null ?
                     new ResponseEntity<>(new ResponseUser(0,"Upload avatar successful",userDTO), HttpStatus.OK) :

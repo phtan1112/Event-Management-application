@@ -281,12 +281,25 @@ public class EventService implements IEventService {
     }
 
     @Override
-    public List<ResponseEvent> getAllEvents() {
-        return eventRepository
-                .findAll()
-                .stream()
-                .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                .toList();
+    public List<ResponseEvent> getAllEvents(Integer codeEnd) {
+        List<ResponseEvent> lst = null;
+
+        if (codeEnd == null) {
+            lst = eventRepository
+                    .findAll()
+                    .stream()
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .toList();
+        }
+        if (codeEnd != null && codeEnd == 1) {
+            lst = eventRepository
+                    .findAll()
+                    .stream()
+                    .filter(e -> !e.getStatus().getEnded())
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .toList();
+        }
+        return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
@@ -313,30 +326,73 @@ public class EventService implements IEventService {
     }
 
     @Override
-    public List<ResponseEvent> filterByCategory(String typeOfEvent) {
-        return eventRepository
-                .findAllByCategoryEqual(typeOfEvent)
-                .stream()
-                .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                .collect(Collectors.toList());
+    public List<ResponseEvent> filterByCategory(String typeOfEvent, Integer codeEnd) {
+        List<ResponseEvent> lst = null;
+
+        if (codeEnd == null) {
+            lst = eventRepository
+                    .findAllByCategoryEqual(typeOfEvent)
+                    .stream()
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+        }
+        if (codeEnd != null && codeEnd == 1) {
+            lst = eventRepository
+                    .findAllByCategoryEqual(typeOfEvent)
+                    .stream()
+                    .filter(e -> !e.getStatus().getEnded())
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+        }
+        return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
-    public List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent, String title) {
-        return eventRepository
-                .findAllByTitleAndCategoryEqual(typeOfEvent, title)
-                .stream()
-                .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                .collect(Collectors.toList());
+    public List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent, String title, Integer codeEnd) {
+
+        List<ResponseEvent> lst = null;
+
+        if (codeEnd == null) {
+            lst = eventRepository
+                    .findAllByTitleAndCategoryEqual(typeOfEvent, title)
+                    .stream()
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+        }
+        if (codeEnd != null && codeEnd == 1) {
+            lst = eventRepository
+                    .findAllByTitleAndCategoryEqual(typeOfEvent, title)
+                    .stream()
+                    .filter(e -> !e.getStatus().getEnded())
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+
+        }
+        return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
-    public List<ResponseEvent> filterByTitleContaining(String title) {
-        return eventRepository
-                .findByTitleContaining(title)
-                .stream()
-                .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                .collect(Collectors.toList());
+    public List<ResponseEvent> filterByTitleContaining(String title, Integer codeEnd) {
+
+        List<ResponseEvent> lst = null;
+
+        if (codeEnd == null) {
+            lst = eventRepository
+                    .findByTitleContaining(title)
+                    .stream()
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+        }
+        if (codeEnd != null && codeEnd == 1) {
+            lst =   eventRepository
+                    .findByTitleContaining(title)
+                    .stream()
+                    .filter(e -> !e.getStatus().getEnded())
+                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                    .collect(Collectors.toList());
+
+        }
+        return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
@@ -503,7 +559,7 @@ public class EventService implements IEventService {
         ) { // specific period of date
             LocalDate currentDate = LocalDate.now();
             if (dateStart.isBefore(currentDate.plusDays(1)) &&
-                    (dateEnd.isBefore(currentDate) || dateEnd.isEqual(currentDate))&&
+                    (dateEnd.isBefore(currentDate) || dateEnd.isEqual(currentDate)) &&
                     dateStart.isBefore(dateEnd)
             ) {
                 filterEvents = eventRepository
@@ -563,14 +619,14 @@ public class EventService implements IEventService {
     public List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays) {
         String email = userService.getUserEmailByAuthorization();
         LocalDate currentDate = LocalDate.now();
-        LocalDate filterDate = currentDate.plusDays(numberDays+1);
+        LocalDate filterDate = currentDate.plusDays(numberDays + 1);
         System.out.println(filterDate);
         return eventRepository
                 .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
                 .stream()
                 .filter(e ->
                         e.getDate_start().isBefore(filterDate)
-                        && ( e.getDate_start().isAfter(currentDate) || e.getDate_start().isEqual(currentDate))
+                                && (e.getDate_start().isAfter(currentDate) || e.getDate_start().isEqual(currentDate))
                 )
                 .map(e -> eventConverter.entityConvertToResponseEvent(e))
                 .sorted(Comparator.comparing(e -> e.getDate_start()))

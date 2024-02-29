@@ -112,9 +112,11 @@ public class EventController {
     }
 
     @GetMapping("/all-events")
-    public ResponseEntity<?> responseAllEvents() {
+    public ResponseEntity<?> responseAllEvents(
+            @Nullable @RequestParam("statusCode") Integer codeEnd
+    ) {
         try {
-            List<ResponseEvent> lstDto = eventService.getAllEvents();
+            List<ResponseEvent> lstDto = eventService.getAllEvents(codeEnd);
             if (!lstDto.isEmpty()) {
                 return new ResponseEntity<>(lstDto, HttpStatus.OK);
             } else {
@@ -231,9 +233,11 @@ public class EventController {
 
     @GetMapping("/filter") // filter event by category
     public ResponseEntity<?> filterEventByCategory(
-            @Param("category") String category) {
+            @Param("category") String category,
+            @Nullable @RequestParam("statusCode") Integer codeEnd
+    ) {
         try {
-            List<ResponseEvent> result = eventService.filterByCategory(category);
+            List<ResponseEvent> result = eventService.filterByCategory(category,codeEnd);
             if (!result.isEmpty()) {
                 return new ResponseEntity<>(result, HttpStatus.OK);
             } else {
@@ -250,14 +254,15 @@ public class EventController {
     @GetMapping("/search") // filter event by category equal and containing title of event
     public ResponseEntity<?> filterEventByCategoryAndTitleEvent(
             @Nullable @Param("category") String category,
-            @Param("title") String title
+            @Param("title") String title,
+            @Nullable @RequestParam("statusCode") Integer codeEnd
     ) {
         try {
             List<ResponseEvent> result;
             if (category != null) {
-                result = eventService.filterByCategoryAndTitle(category, title);
+                result = eventService.filterByCategoryAndTitle(category, title,codeEnd);
             } else {
-                result = eventService.filterByTitleContaining(title);
+                result = eventService.filterByTitleContaining(title, codeEnd);
             }
             if (!result.isEmpty()) {
                 return new ResponseEntity<>(result, HttpStatus.OK);

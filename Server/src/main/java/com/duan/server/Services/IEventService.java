@@ -35,12 +35,12 @@ public interface IEventService {
     ResponseEvent changeStatusEventById(int idEvent, Map<Object, Object> fields);
     ResponseEvent changeAnyDataOfEvent(int idEvent, Map<Object, Object> fields);
     ResponseEvent uploadImage(MultipartFile[] images,int idEvent);
-    List<ResponseEvent> getAllEvents();
+    List<ResponseEvent> getAllEvents(Integer codeEnd);
     List<EventDTO> getAllEventsByStatusEndedIsFalse();
     boolean changeStatusEventByIdEventForSchedule(EventDTO eventDTO, Map<Object, Object> fields);
-    List<ResponseEvent> filterByCategory(String typeOfEvent);
-    List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent,String title);
-    List<ResponseEvent> filterByTitleContaining(String title);
+    List<ResponseEvent> filterByCategory(String typeOfEvent,Integer codeEnd);
+    List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent,String title,Integer codeEnd);
+    List<ResponseEvent> filterByTitleContaining(String title,Integer codeEnd);
 
 
     ResponseEvent addUserToListOfParticipation(int idEvent, String email);
