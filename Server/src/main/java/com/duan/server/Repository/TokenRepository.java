@@ -12,7 +12,6 @@ public interface TokenRepository extends JpaRepository<Token,Integer> {
 
     Optional<Token> findByToken(String token);
 
-//    int countAllByUserAnd(UserEntity user);
 
 
 }

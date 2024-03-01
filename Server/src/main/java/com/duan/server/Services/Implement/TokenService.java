@@ -37,4 +37,12 @@ public class TokenService {
         return tokenRepository.findAllByUserAndExpiredAndRevoked(user,false,false).size();
     }
 
+    public Token findByTokenUser(String token){
+        return tokenRepository.findByToken(token).orElse(null);
+    }
+
+    public void saveToken(Token token){
+        tokenRepository.save(token);
+    }
+
 }
