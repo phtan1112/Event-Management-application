@@ -6,6 +6,9 @@ import com.duan.server.Repository.TokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class TokenService {
 
@@ -22,8 +25,9 @@ public class TokenService {
                 .build();
         tokenRepository.save(token);
     }
+
     public void revokeAndSetExpiredTokenOfUser(UserEntity user) {
-        var validUserTokens = tokenRepository.findAllByUserAndExpiredAndRevoked(user,false,false);
+        var validUserTokens = tokenRepository.findAllByUserAndExpiredAndRevoked(user, false, false);
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
@@ -33,16 +37,33 @@ public class TokenService {
         tokenRepository.saveAll(validUserTokens);
     }
 
-    public int countAllTokenByUser(UserEntity user){
-        return tokenRepository.findAllByUserAndExpiredAndRevoked(user,false,false).size();
+    public int countAllTokenByUser(UserEntity user) {
+        return tokenRepository.findAllByUserAndExpiredAndRevoked(user, false, false).size();
     }
 
-    public Token findByTokenUser(String token){
+    public Token findByTokenUser(String token) {
         return tokenRepository.findByToken(token).orElse(null);
     }
 
-    public void saveToken(Token token){
+    public void saveToken(Token token) {
         tokenRepository.save(token);
     }
 
+    public List<Token> getAllTokenIsExpiredAndRevoked() {
+        return tokenRepository
+                .findAll()
+                .stream()
+                .filter(token -> token.isExpired() || token.isRevoked())
+                .collect(Collectors.toList());
+
+    }
+
+    public List<Token> getAllTokens() {
+        return tokenRepository.findAll();
+
+    }
+
+    public void deleteTokenFromDatabase(Token token) {
+        tokenRepository.delete(token);
+    }
 }

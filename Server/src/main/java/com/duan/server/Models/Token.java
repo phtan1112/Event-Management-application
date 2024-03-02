@@ -30,4 +30,6 @@ public class Token {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     @JsonManagedReference
     private UserEntity user;
+
+
 }

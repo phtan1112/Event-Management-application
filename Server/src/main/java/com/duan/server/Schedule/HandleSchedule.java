@@ -1,12 +1,17 @@
 package com.duan.server.Schedule;
 
+import com.duan.server.Configurations.Security.JWTService;
 import com.duan.server.DTO.EventDTO;
+import com.duan.server.Models.Token;
 import com.duan.server.Services.Implement.EventService;
+import com.duan.server.Services.Implement.TokenService;
+import org.aspectj.lang.annotation.AdviceName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,14 +21,19 @@ import java.util.Map;
 
 @Component
 @EnableAsync
-public class HandleSchedule {
+public class HandleSchedule { // the task will run parallel in schedule tasks.
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private TokenService tokenService;
+
+    @Autowired
+    private JWTService jwtService;
 
     //auto change status when the status is start.
     @Async
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 5000) //5s will call the method below once.
     public void scheduleFixedRateTaskAsync() throws InterruptedException {
         List<EventDTO> allEvents = eventService.getAllEventsByStatusEndedIsFalse();
         LocalDate currentDate = LocalDate.now(); //2024-02-13
@@ -69,5 +79,16 @@ public class HandleSchedule {
     // so this method below will check whether the token's user is expired or revoked or not
     // if yes, the method will remove it permanent the database
     //for saving the database memory and increasing performance query for the database.
-
+    @Async
+    @Scheduled(cron = "0 0 1 ? * SUN") // 1am every sunday
+    // (cron = "0 40 15 * * *") second - minute - hour - day in month - month - day in week)
+    public void removeTokenIsExpiredByCheckJWT() {
+        System.out.println("halisjfansfl");
+        List<Token> lst_token = tokenService.getAllTokens();
+        lst_token.forEach(token -> {
+            if (jwtService.isTokenExpired(token.getToken())) {
+                tokenService.deleteTokenFromDatabase(token);
+            }
+        });
+    }
 }
