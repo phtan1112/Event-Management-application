@@ -384,7 +384,7 @@ public class EventService implements IEventService {
                     .collect(Collectors.toList());
         }
         if (codeEnd != null && codeEnd == 1) {
-            lst =   eventRepository
+            lst = eventRepository
                     .findByTitleContaining(title)
                     .stream()
                     .filter(e -> !e.getStatus().getEnded())
@@ -620,8 +620,7 @@ public class EventService implements IEventService {
         String email = userService.getUserEmailByAuthorization();
         LocalDate currentDate = LocalDate.now();
         LocalDate filterDate = currentDate.plusDays(numberDays + 1);
-        System.out.println(filterDate);
-        return eventRepository
+        return numberDays >= 0 ? eventRepository
                 .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
                 .stream()
                 .filter(e ->
@@ -630,7 +629,8 @@ public class EventService implements IEventService {
                 )
                 .map(e -> eventConverter.entityConvertToResponseEvent(e))
                 .sorted(Comparator.comparing(e -> e.getDate_start()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : new ArrayList<>();
     }
 
 

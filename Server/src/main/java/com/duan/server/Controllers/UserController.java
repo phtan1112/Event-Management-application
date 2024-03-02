@@ -167,7 +167,7 @@ public class UserController {
                 return new ResponseEntity<>(cm, HttpStatus.OK);
             } else {
                 cm.setCode(1); //invalid email, password
-                cm.setMessage("Cannot change data");
+                cm.setMessage("Cannot change data because allowed change with fullName field.");
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {

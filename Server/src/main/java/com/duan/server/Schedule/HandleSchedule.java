@@ -21,6 +21,7 @@ public class HandleSchedule {
     private EventService eventService;
 
 
+    //auto change status when the status is start.
     @Async
     @Scheduled(fixedRate = 5000)
     public void scheduleFixedRateTaskAsync() throws InterruptedException {
@@ -63,4 +64,10 @@ public class HandleSchedule {
         }
         Thread.sleep(2000);
     }
+
+    //handle 1am everyday
+    // so this method below will check whether the token's user is expired or revoked or not
+    // if yes, the method will remove it permanent the database
+    //for saving the database memory and increasing performance query for the database.
+
 }

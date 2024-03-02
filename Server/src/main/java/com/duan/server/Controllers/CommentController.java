@@ -31,7 +31,9 @@ public class CommentController {
             else{
                 CodeAndMessage cm = new CodeAndMessage();
                 cm.setCode(1);
-                cm.setMessage("Fail to comment because your content is empty or star is not in 0 to 5 or you do not participate the event!!");
+                cm.setMessage("Fail to comment " +
+                        "because your content is empty or star is not in 0 to 5" +
+                        " or the event is not ended!!");
                 return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
 
             }

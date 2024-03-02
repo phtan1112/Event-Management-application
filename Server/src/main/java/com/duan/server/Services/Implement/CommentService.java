@@ -3,6 +3,7 @@ package com.duan.server.Services.Implement;
 import com.duan.server.Converter.CommentConverter;
 import com.duan.server.DTO.CommentDTO;
 import com.duan.server.DTO.EventDTO;
+import com.duan.server.DTO.StatusDTO;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Models.CommentEntity;
 import com.duan.server.Repository.CommentRepository;
@@ -32,10 +33,13 @@ public class CommentService implements ICommentService {
         UserDTO userDTO = userService.findUserByEmail(email);
 
         EventDTO eventDTO = eventService.findById(commentRequest.getEvent_id());
-        if (eventDTO.getId() != null) {
+
+        if (eventDTO.getId() != null) { // allow comment when event is ended
+            StatusDTO statusDTO = eventService.findStatusByEvent(eventDTO.getId());
             if (!commentRequest.getContent().equals("") &&
                     commentRequest.getStar() > 0 &&
                     commentRequest.getStar() <= 5
+                    &&  statusDTO.getEnded()
             ) {
                 CommentEntity commentEntity = commentConverter.toEntity(
                         CommentDTO

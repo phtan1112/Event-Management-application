@@ -6,11 +6,8 @@ import com.duan.server.Converter.EventConverter;
 import com.duan.server.Converter.UserConverter;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.UserDTO;
-import com.duan.server.Models.Token;
 import com.duan.server.Models.UserEntity;
-import com.duan.server.Repository.TokenRepository;
 import com.duan.server.Repository.UserRepository;
-import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IUserService;
 import com.duan.server.Validators.ValidateEmail;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +25,10 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class UserService implements IUserService, UserDetailsService {
@@ -227,28 +221,27 @@ public class UserService implements IUserService, UserDetailsService {
     @Override
     public Boolean updateSomeData(String email, Map<Object, Object> fields) {
         UserEntity userEntity = userRepository.findByEmail(email);
+        AtomicBoolean check  = new AtomicBoolean(false);
         if (userEntity != null) {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
                 if (getUserEmailByAuthorization().equals(email)) {
                     fields.forEach((key, value) -> {
                         String parseKey = (String) key;
-
-                        if (parseKey.equalsIgnoreCase("password")) {
-                            value = passwordEncoder.encode((CharSequence) value);
+                        if (parseKey.equalsIgnoreCase("fullName")) {
+                            Field field = ReflectionUtils.findField(UserEntity.class, parseKey);
+                            field.setAccessible(true);
+                            ReflectionUtils.setField(field, userEntity, value);
+                            userRepository.save(userEntity);
+                            check.set(true);
                         }
-
-
-                        Field field = ReflectionUtils.findField(UserEntity.class, parseKey);
-                        field.setAccessible(true);
-                        ReflectionUtils.setField(field, userEntity, value);
                     });
-                    userRepository.save(userEntity);
-                    return true;
                 } else return false;
             }
         }
-        return false;
+
+
+        return check.get();
     }
 
     @Override
