@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/comment")
@@ -38,6 +35,49 @@ public class CommentController {
 
             }
         }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @PutMapping("/edit-comment/{id}")
+    public ResponseEntity<?> editComment(
+            @PathVariable("id") Integer idComment,
+            @RequestBody CommentRequest commentRequest){
+        try{
+            CommentDTO commentDTO = commentService.updateComment(commentRequest, idComment);
+            if(commentDTO != null){
+                return new ResponseEntity<>(commentDTO, HttpStatus.OK);
+            }
+            else{
+                CodeAndMessage cm = new CodeAndMessage();
+                cm.setCode(1);
+                cm.setMessage("Fail to update comment with id = " + idComment);
+                return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/remove-comment/{id}")
+    public ResponseEntity<?> removeComment(@PathVariable("id") Integer idComment){
+        try{
+            if(commentService.deleteComment(idComment)){
+                CodeAndMessage cm = new CodeAndMessage();
+                cm.setCode(0);
+                cm.setMessage("Remove comment with id = " + idComment + " successfully.");
+                return new ResponseEntity<>(cm, HttpStatus.OK);
+            }
+            else{
+                CodeAndMessage cm = new CodeAndMessage();
+                cm.setCode(1);
+                cm.setMessage("Fail to remove comment with id = " + idComment);
+                return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+            }
+        }
+        catch (Exception e){
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

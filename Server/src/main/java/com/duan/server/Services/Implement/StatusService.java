@@ -50,5 +50,15 @@ public class StatusService implements IStatusService {
         return statusEntity1;
     }
 
+    @Override
+    public Boolean deleteStatusByEvent(EventDTO eventDTO) {
+        StatusEntity statusEntity  = statusRepository.findByEvent(eventConverter.toEntity(eventDTO));
+        if(statusEntity != null){
+            statusRepository.delete(statusEntity);
+            return true;
+        }
+        return false;
+    }
+
 
 }

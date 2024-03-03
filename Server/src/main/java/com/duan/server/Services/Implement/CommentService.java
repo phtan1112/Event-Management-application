@@ -1,6 +1,8 @@
 package com.duan.server.Services.Implement;
 
 import com.duan.server.Converter.CommentConverter;
+import com.duan.server.Converter.EventConverter;
+import com.duan.server.Converter.UserConverter;
 import com.duan.server.DTO.CommentDTO;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.StatusDTO;
@@ -11,7 +13,9 @@ import com.duan.server.Request.CommentRequest;
 import com.duan.server.Services.ICommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class CommentService implements ICommentService {
@@ -24,6 +28,12 @@ public class CommentService implements ICommentService {
     private CommentConverter commentConverter;
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private EventConverter eventConverter;
+
+    @Autowired
+    private UserConverter userConverter;
 
 
     @Override
@@ -39,7 +49,7 @@ public class CommentService implements ICommentService {
             if (!commentRequest.getContent().equals("") &&
                     commentRequest.getStar() > 0 &&
                     commentRequest.getStar() <= 5
-                    &&  statusDTO.getEnded()
+                    && statusDTO.getEnded()
             ) {
                 CommentEntity commentEntity = commentConverter.toEntity(
                         CommentDTO
@@ -53,7 +63,7 @@ public class CommentService implements ICommentService {
                 );
                 commentEntity = commentRepository.save(commentEntity);
                 eventService.calculateStarOfEvent(commentRequest.getEvent_id());
-                CommentDTO commentDTO =commentConverter.toDto(commentEntity);
+                CommentDTO commentDTO = commentConverter.toDto(commentEntity);
                 commentDTO.setEvent(eventService.findById(eventDTO.getId()));
                 return commentDTO;
             }
@@ -61,4 +71,61 @@ public class CommentService implements ICommentService {
         }
         return null;
     }
+
+    @Override
+    public CommentDTO updateComment(CommentRequest commentRequest, Integer idComment) {
+        String email = userService.getUserEmailByAuthorization();
+        UserDTO userDTO = userService.findUserByEmail(email);
+        CommentEntity commentEntity =
+                commentRepository.findByIdAndUser(
+                        idComment,
+                        userConverter.toEntity(userDTO)).orElse(null);
+        if (commentEntity != null) {
+            if (!commentRequest.getContent().equals("") &&
+                    commentRequest.getStar() > 0 &&
+                    commentRequest.getStar() <= 5
+            ) {
+                commentEntity.setContent(commentRequest.getContent());
+                commentEntity.setStar(commentRequest.getStar());
+                commentEntity = commentRepository.save(commentEntity);
+                eventService.calculateStarOfEvent(commentEntity.getEvent().getId());
+                CommentDTO commentDTO = commentConverter.toDto(commentEntity);
+                commentDTO.setEvent(eventConverter.toDTO(commentEntity.getEvent()));
+                return commentDTO;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Boolean deleteComment(int idComment) {
+        String email = userService.getUserEmailByAuthorization();
+        UserDTO userDTO = userService.findUserByEmail(email);
+        CommentEntity commentEntity =
+                commentRepository.findByIdAndUser(
+                        idComment,
+                        userConverter.toEntity(userDTO)).orElse(null);
+        if (commentEntity != null) {
+
+            int idEvent =commentEntity.getEvent().getId();
+            commentRepository.delete(commentEntity);
+
+            commentEntity.getEvent().getComments().remove(commentEntity);
+
+            eventService.calculateStarOfEvent(idEvent);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean deleteCommentByEvent(EventDTO eventDTO) {
+        List<CommentEntity> listComments = commentRepository.findAllByEvent(eventConverter.toEntity(eventDTO));
+        if(!listComments.isEmpty()){
+            listComments.forEach(commentEntity -> commentRepository.delete(commentEntity));
+            return true;
+        }
+        return false;
+    }
+
 }

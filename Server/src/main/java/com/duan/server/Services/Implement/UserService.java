@@ -221,7 +221,7 @@ public class UserService implements IUserService, UserDetailsService {
     @Override
     public Boolean updateSomeData(String email, Map<Object, Object> fields) {
         UserEntity userEntity = userRepository.findByEmail(email);
-        AtomicBoolean check  = new AtomicBoolean(false);
+        AtomicBoolean check = new AtomicBoolean(false);
         if (userEntity != null) {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
@@ -294,7 +294,7 @@ public class UserService implements IUserService, UserDetailsService {
     public UserDTO saveEventIntoEventSaveListByUser(int idEvent) {
         UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
         EventDTO eventDTO = eventService.findById(idEvent);
-        if (userEntity.getId() != null && eventDTO.getId() != null) {
+        if (userEntity != null && eventDTO != null) {
             if (!checkEventIsInEventSavedListOrNot(
                     userConverter.convertEventSavedListToDTO(
                             userEntity.getList_events_saved())
@@ -326,7 +326,7 @@ public class UserService implements IUserService, UserDetailsService {
     public UserDTO removeEventFromEventSavedList(int idEvent) {
         UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
         EventDTO eventDTO = eventService.findById(idEvent);
-        if (userEntity.getId() != null && eventDTO.getId() != null) {
+        if (userEntity != null && eventDTO != null) {
             if (checkEventIsInEventSavedListOrNot(
                     userConverter.convertEventSavedListToDTO(
                             userEntity.getList_events_saved())

@@ -74,17 +74,17 @@ public class EventEntity {
     @JsonManagedReference
     private CategoryEntity category;
 
-    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, optional = false) //default la lazy
+    @OneToOne(mappedBy = "event", optional = false) //default la lazy
     @JsonBackReference
     @ToString.Exclude
     private StatusEntity status;
 
-    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY) //default la lazy
+    @OneToMany(mappedBy = "event") //default la lazy
     @JsonBackReference
     @ToString.Exclude
     private List<CommentEntity> comments = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name="tbl_event_participators",
             uniqueConstraints = {

@@ -68,11 +68,13 @@ public class SecurityConfiguration {
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/event/cancel/**").hasAuthority("ROLE_USER")
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/event/permit/**").hasAuthority("ROLE_USER")
                                 .requestMatchers(HttpMethod.PATCH, "/api/v1/event/**").hasAuthority("ROLE_USER")
-                                .requestMatchers(HttpMethod.GET, "/api/v1/event/filter/**").hasAuthority("ROLE_USER")
-                                .requestMatchers(HttpMethod.GET, "/api/v1/event/search/**").hasAuthority("ROLE_USER")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/event/filter/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/event/search/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/event/add-participator").hasAuthority("ROLE_USER")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/event/remove-participator").hasAuthority("ROLE_USER")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/event/view-event/**").hasAuthority("ROLE_USER")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/event/event-upcoming/**").hasAuthority("ROLE_USER")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/event/delete/**").hasAuthority("ROLE_USER")
                                 //comment
                                 .requestMatchers(HttpMethod.POST, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                                 //disallow everything else

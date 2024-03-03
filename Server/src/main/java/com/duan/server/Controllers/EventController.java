@@ -113,10 +113,11 @@ public class EventController {
 
     @GetMapping("/all-events")
     public ResponseEntity<?> responseAllEvents(
+            @RequestParam("email") String email,
             @Nullable @RequestParam("statusCode") Integer codeEnd
     ) {
         try {
-            List<ResponseEvent> lstDto = eventService.getAllEvents(codeEnd);
+            List<ResponseEvent> lstDto = eventService.getAllEvents(email,codeEnd);
             if (!lstDto.isEmpty()) {
                 return new ResponseEntity<>(lstDto, HttpStatus.OK);
             } else {
@@ -233,11 +234,12 @@ public class EventController {
 
     @GetMapping("/filter") // filter event by category
     public ResponseEntity<?> filterEventByCategory(
-            @Param("category") String category,
+            @RequestParam("email") String email,
+            @RequestParam("category") String category,
             @Nullable @RequestParam("statusCode") Integer codeEnd
     ) {
         try {
-            List<ResponseEvent> result = eventService.filterByCategory(category,codeEnd);
+            List<ResponseEvent> result = eventService.filterByCategory(email,category,codeEnd);
             if (!result.isEmpty()) {
                 return new ResponseEntity<>(result, HttpStatus.OK);
             } else {
@@ -253,16 +255,17 @@ public class EventController {
 
     @GetMapping("/search") // filter event by category equal and containing title of event
     public ResponseEntity<?> filterEventByCategoryAndTitleEvent(
+            @RequestParam("email") String email,
             @Nullable @Param("category") String category,
-            @Param("title") String title,
+            @RequestParam("title") String title,
             @Nullable @RequestParam("statusCode") Integer codeEnd
     ) {
         try {
             List<ResponseEvent> result;
             if (category != null) {
-                result = eventService.filterByCategoryAndTitle(category, title,codeEnd);
+                result = eventService.filterByCategoryAndTitle(email,category, title,codeEnd);
             } else {
-                result = eventService.filterByTitleContaining(title, codeEnd);
+                result = eventService.filterByTitleContaining(email,title, codeEnd);
             }
             if (!result.isEmpty()) {
                 return new ResponseEntity<>(result, HttpStatus.OK);
@@ -298,6 +301,28 @@ public class EventController {
         }
     }
 
+    @PostMapping("/remove-participator")
+    public ResponseEntity<?> removeParticipatorOfEvent( //remove by owner or leave by participator.
+            @RequestBody ParticipatorEventRequest participatorEventRequest) {
+        try {
+            Boolean result = eventService.removeUserFromListOfParticipation(
+                    participatorEventRequest.getIdEvent(), participatorEventRequest.getEmail());
+            if (result) {
+                CodeAndMessage cm = new CodeAndMessage();
+                cm.setCode(0);
+                cm.setMessage("Remove or leave the participators successfully.");
+                return new ResponseEntity<>(cm, HttpStatus.OK);
+            } else {
+                CodeAndMessage cm = new CodeAndMessage();
+                cm.setCode(1);
+                cm.setMessage("Fail to remove user from participators!!");
+                return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     @GetMapping("/view-event") //1 is created, 2 is operating, 3 is ended
     public ResponseEntity<?> viewEventByUserAndStatus(
             @Nullable @RequestParam("statusCode") Integer statusCode, // [1,3]
@@ -342,6 +367,13 @@ public class EventController {
             cm.setMessage("There are no events available");
             return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> removeEventAndAddIntoTrash(@PathVariable("id") Integer idEvent){
+        Boolean check  =eventService.changeEventToRemoved(idEvent);
+        return check ? new ResponseEntity<>(
+                check,HttpStatus.OK) : new ResponseEntity<>(check,HttpStatus.BAD_REQUEST);
     }
 
 }

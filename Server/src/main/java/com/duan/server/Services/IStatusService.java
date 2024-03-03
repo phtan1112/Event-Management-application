@@ -12,4 +12,7 @@ public interface IStatusService {
     StatusDTO getStatusByEvent(EventDTO eventDTO);
 
     StatusEntity changeStatusOfEvent(StatusEntity statusEntity, Map<Object, Object> fields);
+
+    Boolean deleteStatusByEvent(EventDTO eventDTO);
+
 }

@@ -7,10 +7,7 @@ import jakarta.persistence.Column;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 @Data
@@ -47,6 +44,12 @@ public class EventDTO {
             this.participators = new HashSet<>();
         }
         this.participators.add(e);
+    }
+    public void removeUserToParticipatorsList(UserDTO u){
+        if(participators == null){
+            this.participators = new HashSet<>();
+        }
+        participators.removeIf(p -> Objects.equals(p.getId(), u.getId()));
     }
     public EventDTO(String title,
                     String description,

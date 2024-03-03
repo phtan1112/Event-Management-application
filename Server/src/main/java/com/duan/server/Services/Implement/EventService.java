@@ -11,6 +11,7 @@ import com.duan.server.Models.StatusEntity;
 import com.duan.server.Repository.EventRepository;
 import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IEventService;
+import org.apache.catalina.User;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
@@ -281,23 +282,26 @@ public class EventService implements IEventService {
     }
 
     @Override
-    public List<ResponseEvent> getAllEvents(Integer codeEnd) {
+    public List<ResponseEvent> getAllEvents(String email, Integer codeEnd) {
         List<ResponseEvent> lst = null;
-
-        if (codeEnd == null) {
-            lst = eventRepository
-                    .findAll()
-                    .stream()
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .toList();
-        }
-        if (codeEnd != null && codeEnd == 1) {
-            lst = eventRepository
-                    .findAll()
-                    .stream()
-                    .filter(e -> !e.getStatus().getEnded())
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .toList();
+        UserDTO userDTO = userService.findUserByEmail(email);
+        if (userDTO != null) {
+            if (codeEnd == null) {
+                lst = eventRepository
+                        .findAll()
+                        .stream()
+                        .filter(e -> !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .toList();
+            }
+            if (codeEnd != null && codeEnd == 1) {
+                lst = eventRepository
+                        .findAll()
+                        .stream()
+                        .filter(e -> !e.getStatus().getEnded() && !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .toList();
+            }
         }
         return lst != null ? lst : new ArrayList<>();
     }
@@ -326,71 +330,79 @@ public class EventService implements IEventService {
     }
 
     @Override
-    public List<ResponseEvent> filterByCategory(String typeOfEvent, Integer codeEnd) {
+    public List<ResponseEvent> filterByCategory(String email, String typeOfEvent, Integer codeEnd) {
         List<ResponseEvent> lst = null;
-
-        if (codeEnd == null) {
-            lst = eventRepository
-                    .findAllByCategoryEqual(typeOfEvent)
-                    .stream()
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
-        }
-        if (codeEnd != null && codeEnd == 1) {
-            lst = eventRepository
-                    .findAllByCategoryEqual(typeOfEvent)
-                    .stream()
-                    .filter(e -> !e.getStatus().getEnded())
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
+        UserDTO userDTO = userService.findUserByEmail(email);
+        if (userDTO != null) {
+            if (codeEnd == null) {
+                lst = eventRepository
+                        .findAllByCategoryEqual(typeOfEvent)
+                        .stream()
+                        .filter(e -> !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
+            if (codeEnd != null && codeEnd == 1) {
+                lst = eventRepository
+                        .findAllByCategoryEqual(typeOfEvent)
+                        .stream()
+                        .filter(e -> !e.getStatus().getEnded() && !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
         }
         return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
-    public List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent, String title, Integer codeEnd) {
+    public List<ResponseEvent> filterByCategoryAndTitle(String email, String typeOfEvent, String title, Integer codeEnd) {
 
         List<ResponseEvent> lst = null;
+        UserDTO userDTO = userService.findUserByEmail(email);
+        if (userDTO != null) {
+            if (codeEnd == null) {
+                lst = eventRepository
+                        .findAllByTitleAndCategoryEqual(typeOfEvent, title)
+                        .stream()
+                        .filter(e -> !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
+            if (codeEnd != null && codeEnd == 1) {
+                lst = eventRepository
+                        .findAllByTitleAndCategoryEqual(typeOfEvent, title)
+                        .stream()
+                        .filter(e -> !e.getStatus().getEnded() && !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
 
-        if (codeEnd == null) {
-            lst = eventRepository
-                    .findAllByTitleAndCategoryEqual(typeOfEvent, title)
-                    .stream()
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
-        }
-        if (codeEnd != null && codeEnd == 1) {
-            lst = eventRepository
-                    .findAllByTitleAndCategoryEqual(typeOfEvent, title)
-                    .stream()
-                    .filter(e -> !e.getStatus().getEnded())
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
-
+            }
         }
         return lst != null ? lst : new ArrayList<>();
     }
 
     @Override
-    public List<ResponseEvent> filterByTitleContaining(String title, Integer codeEnd) {
+    public List<ResponseEvent> filterByTitleContaining(String email, String title, Integer codeEnd) {
 
         List<ResponseEvent> lst = null;
-
-        if (codeEnd == null) {
-            lst = eventRepository
-                    .findByTitleContaining(title)
-                    .stream()
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
-        }
-        if (codeEnd != null && codeEnd == 1) {
-            lst = eventRepository
-                    .findByTitleContaining(title)
-                    .stream()
-                    .filter(e -> !e.getStatus().getEnded())
-                    .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                    .collect(Collectors.toList());
-
+        UserDTO userDTO = userService.findUserByEmail(email);
+        if (userDTO != null) {
+            if (codeEnd == null) {
+                lst = eventRepository
+                        .findByTitleContaining(title)
+                        .stream()
+                        .filter(e -> !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
+            if (codeEnd != null && codeEnd == 1) {
+                lst = eventRepository
+                        .findByTitleContaining(title)
+                        .stream()
+                        .filter(e -> !e.getStatus().getEnded() && !e.getUser().getEmail().equalsIgnoreCase(email))
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .collect(Collectors.toList());
+            }
         }
         return lst != null ? lst : new ArrayList<>();
     }
@@ -399,8 +411,8 @@ public class EventService implements IEventService {
     public ResponseEvent addUserToListOfParticipation(int idEvent, String email) {
         UserDTO userDTO = userService.findUserByEmail(email);
         EventDTO eventDTO = findById(idEvent);
-        if (userDTO.getId() != null &&
-                eventDTO.getId() != null &&
+        if (userDTO != null &&
+                eventDTO != null &&
                 !checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators()) &&
                 eventDTO.getUser().getId() != userDTO.getId()
         ) {
@@ -422,20 +434,41 @@ public class EventService implements IEventService {
         return false;
     }
 
+    @Transactional
+    @Override
+    public Boolean removeUserFromListOfParticipation(int idEvent, String email) {
+        UserDTO userDTO = userService.findUserByEmail(email);
+        EventDTO eventDTO = findById(idEvent);
+        if (userDTO != null &&
+                eventDTO != null &&
+                checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators())
+        ) {
+            eventDTO.removeUserToParticipatorsList(userDTO);
+            EventEntity eventEntity = eventConverter.toEntity(eventDTO);
+            eventRepository.save(eventEntity);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void calculateStarOfEvent(int idEvent) {
         int count = 0;
         Double sum = 0.0;
         EventEntity eventEntity = eventRepository.findById(idEvent);
-        for (CommentEntity commentEntity : eventEntity.getComments()) {
-            sum += commentEntity.getStar();
-            count += 1;
+        if (eventEntity.getComments().size() > 0) {
+            for (CommentEntity commentEntity : eventEntity.getComments()) {
+                sum += commentEntity.getStar();
+                count += 1;
+            }
+            if (count > 0) {
+                Double rs = Precision.round(sum / count, 1);
+                eventEntity.setStar(rs);
+            }
+        } else {
+            eventEntity.setStar(0.0);
         }
-        if (count > 0) {
-            Double rs = Precision.round(sum / count, 1);
-            eventEntity.setStar(rs);
-            eventRepository.save(eventEntity);
-        }
+        eventRepository.save(eventEntity);
     }
 
     @Override
@@ -631,6 +664,18 @@ public class EventService implements IEventService {
                 .sorted(Comparator.comparing(e -> e.getDate_start()))
                 .collect(Collectors.toList())
                 : new ArrayList<>();
+    }
+
+    @Override
+    public Boolean changeEventToRemoved(Integer idEvent) {
+
+        EventEntity eventEntity = eventConverter.toEntity(findById(idEvent));
+        if (eventEntity != null) {
+            eventRepository.delete(eventEntity);
+            return true;
+        }
+
+        return false;
     }
 
 

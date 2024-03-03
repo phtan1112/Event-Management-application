@@ -35,16 +35,17 @@ public interface IEventService {
     ResponseEvent changeStatusEventById(int idEvent, Map<Object, Object> fields);
     ResponseEvent changeAnyDataOfEvent(int idEvent, Map<Object, Object> fields);
     ResponseEvent uploadImage(MultipartFile[] images,int idEvent);
-    List<ResponseEvent> getAllEvents(Integer codeEnd);
+    List<ResponseEvent> getAllEvents(String email,Integer codeEnd);
     List<EventDTO> getAllEventsByStatusEndedIsFalse();
     boolean changeStatusEventByIdEventForSchedule(EventDTO eventDTO, Map<Object, Object> fields);
-    List<ResponseEvent> filterByCategory(String typeOfEvent,Integer codeEnd);
-    List<ResponseEvent> filterByCategoryAndTitle(String typeOfEvent,String title,Integer codeEnd);
-    List<ResponseEvent> filterByTitleContaining(String title,Integer codeEnd);
+    List<ResponseEvent> filterByCategory(String email,String typeOfEvent,Integer codeEnd);
+    List<ResponseEvent> filterByCategoryAndTitle(String email,String typeOfEvent,String title,Integer codeEnd);
+    List<ResponseEvent> filterByTitleContaining(String email,String title,Integer codeEnd);
 
 
     ResponseEvent addUserToListOfParticipation(int idEvent, String email);
     Boolean checkUserIsInParticipatorsOrNot(UserDTO userDTO, Set<UserDTO> participators);
+    Boolean removeUserFromListOfParticipation(int idEvent, String email);
 
     void calculateStarOfEvent(int idEvent);
     List<ResponseEvent> viewEventByUserAndStatus(Integer statusCode,
@@ -52,4 +53,9 @@ public interface IEventService {
                                                  Integer typeOfDate,
                                                  LocalDate dateStart, LocalDate dateEnd);
     List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays);
+
+    Boolean changeEventToRemoved(Integer idEvent);
+//    Boolean deleteEventPermanent(Integer idEvent);
+
+
 }

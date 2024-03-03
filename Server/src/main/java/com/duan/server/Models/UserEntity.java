@@ -91,15 +91,9 @@ public class UserEntity {
             this.list_events_saved = new HashSet<>();
         }
         list_events_saved.removeIf(s -> Objects.equals(s.getId(), e.getId()));
-//        this.list_events_saved.remove(e);
     }
 
-    public void addEvent(EventEntity e){
-        if(events_participate == null){
-            this.events_participate = new ArrayList<>();
-        }
-        this.events_participate.add(e);
-    }
+
 
     public UserEntity(String fullName, String email, String password,  String role,LocalDateTime createdAt) {
         this.fullName = fullName;
