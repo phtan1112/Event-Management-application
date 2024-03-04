@@ -54,8 +54,8 @@ public interface IEventService {
                                                  LocalDate dateStart, LocalDate dateEnd);
     List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays);
 
-    Boolean changeEventToRemoved(Integer idEvent);
-//    Boolean deleteEventPermanent(Integer idEvent);
+    Boolean deleteEvent(Integer idEvent);
+
 
 
 }

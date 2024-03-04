@@ -74,7 +74,7 @@ public class EventEntity {
     @JsonManagedReference
     private CategoryEntity category;
 
-    @OneToOne(mappedBy = "event", optional = false) //default la lazy
+    @OneToOne(mappedBy = "event", optional = false) //default la eager
     @JsonBackReference
     @ToString.Exclude
     private StatusEntity status;

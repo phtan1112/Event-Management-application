@@ -44,7 +44,7 @@ public class CommentService implements ICommentService {
 
         EventDTO eventDTO = eventService.findById(commentRequest.getEvent_id());
 
-        if (eventDTO.getId() != null) { // allow comment when event is ended
+        if (eventDTO != null) { // allow comment when event is ended
             StatusDTO statusDTO = eventService.findStatusByEvent(eventDTO.getId());
             if (!commentRequest.getContent().equals("") &&
                     commentRequest.getStar() > 0 &&

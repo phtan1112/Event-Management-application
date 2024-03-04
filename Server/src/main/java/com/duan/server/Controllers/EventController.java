@@ -371,9 +371,16 @@ public class EventController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> removeEventAndAddIntoTrash(@PathVariable("id") Integer idEvent){
-        Boolean check  =eventService.changeEventToRemoved(idEvent);
+        Boolean check  =eventService.deleteEvent(idEvent);
+        CodeAndMessage cm = new CodeAndMessage();
         return check ? new ResponseEntity<>(
-                check,HttpStatus.OK) : new ResponseEntity<>(check,HttpStatus.BAD_REQUEST);
+                CodeAndMessage
+                        .builder().code(0).message("Delete event with id = " + idEvent + " successfully!")
+                        .build(),HttpStatus.OK) :
+                new ResponseEntity<>(
+                        CodeAndMessage
+                                .builder().code(1).message("Cannot delete event with id = " + idEvent + " successfully!")
+                                .build(),HttpStatus.BAD_REQUEST);
     }
 
 }

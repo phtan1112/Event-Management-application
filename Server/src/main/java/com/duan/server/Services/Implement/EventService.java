@@ -1,9 +1,6 @@
 package com.duan.server.Services.Implement;
 
-import com.duan.server.Converter.CategoryConverter;
-import com.duan.server.Converter.EventConverter;
-import com.duan.server.Converter.StatusConverter;
-import com.duan.server.Converter.UserConverter;
+import com.duan.server.Converter.*;
 import com.duan.server.DTO.*;
 import com.duan.server.Models.CommentEntity;
 import com.duan.server.Models.EventEntity;
@@ -11,6 +8,7 @@ import com.duan.server.Models.StatusEntity;
 import com.duan.server.Repository.EventRepository;
 import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IEventService;
+import jdk.jfr.consumer.EventStream;
 import org.apache.catalina.User;
 import org.apache.commons.math3.util.Precision;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +47,8 @@ public class EventService implements IEventService {
     @Autowired
     private ImageService imageService;
 
+    @Autowired
+    private CommentService commentService;
 
     @Override
     @Transactional
@@ -71,7 +71,7 @@ public class EventService implements IEventService {
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
 
         if (userDTO.getId() != null && categoryDTO.getId() != null &&
-                checkStartDateAndTimeStartIsAfterOrNot(date_start, time_start, time_end)) {
+                checkStartDateAndTimeStartIsAfterOrNot(date_start)) {
             //get URL image after uploaded on Cloudinary
             List<String> urls = Arrays.stream(images).map(image -> imageService.uploadImage(image)).toList();
 
@@ -114,11 +114,8 @@ public class EventService implements IEventService {
         return null;
     }
 
-    private boolean checkStartDateAndTimeStartIsAfterOrNot(LocalDate date_start,
-                                                           LocalTime time_start,
-                                                           LocalTime time_end) {
+    private boolean checkStartDateAndTimeStartIsAfterOrNot(LocalDate date_start) {
         LocalDate date_now = LocalDate.now();
-        LocalTime time_now = LocalTime.now();
         if ((date_start.isAfter(date_now) || date_start.isEqual(date_now))) {
             return true;
         }
@@ -416,7 +413,6 @@ public class EventService implements IEventService {
                 !checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators()) &&
                 eventDTO.getUser().getId() != userDTO.getId()
         ) {
-
             eventDTO.addUserDTO(userDTO);
             EventEntity eventEntity = eventConverter.toEntity(eventDTO);
             eventEntity = eventRepository.save(eventEntity);
@@ -450,6 +446,7 @@ public class EventService implements IEventService {
         }
         return false;
     }
+
 
     @Override
     public void calculateStarOfEvent(int idEvent) {
@@ -666,12 +663,24 @@ public class EventService implements IEventService {
                 : new ArrayList<>();
     }
 
-    @Override
-    public Boolean changeEventToRemoved(Integer idEvent) {
 
+    @Transactional
+    @Override
+    public Boolean deleteEvent(Integer idEvent) {
+        UserDTO userDTO = userService.findUserByEmail();
         EventEntity eventEntity = eventConverter.toEntity(findById(idEvent));
-        if (eventEntity != null) {
+        if (eventEntity != null && eventEntity.getUser().getId() == userDTO.getId()) {
+            EventDTO eventDTO = eventConverter.toDTO(eventEntity);
+
+            statusService.deleteStatusByEvent(eventDTO);
+            commentService.deleteCommentByEvent(eventDTO);
+
+            eventEntity.getParticipators().clear();
+            eventRepository.save(eventEntity);
+
+            userService.removeAllEventOfSavedListEvent(eventDTO.getId());
             eventRepository.delete(eventEntity);
+
             return true;
         }
 

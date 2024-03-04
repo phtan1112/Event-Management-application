@@ -78,23 +78,6 @@ public class UserEntity {
     @JsonBackReference
     @ToString.Exclude
     private Set<Token> tokens = new HashSet<>();
-
-    public void addEventToSaveList(EventEntity e){
-        if(list_events_saved == null){
-            this.list_events_saved = new HashSet<>();
-        }
-        this.list_events_saved.add(e);
-    }
-
-    public void removeEventToSaveList(EventEntity e){
-        if(list_events_saved == null){
-            this.list_events_saved = new HashSet<>();
-        }
-        list_events_saved.removeIf(s -> Objects.equals(s.getId(), e.getId()));
-    }
-
-
-
     public UserEntity(String fullName, String email, String password,  String role,LocalDateTime createdAt) {
         this.fullName = fullName;
         this.email = email;

@@ -39,6 +39,8 @@ public class EventDTO {
     private StatusDTO status;
     private Set<UserDTO> participators;
     private List<CommentDTO> comments = new ArrayList<>();
+    private List<UserEntity> user_saved_event= new ArrayList<>();
+
     public void addUserDTO(UserDTO e){
         if(participators == null){
             this.participators = new HashSet<>();

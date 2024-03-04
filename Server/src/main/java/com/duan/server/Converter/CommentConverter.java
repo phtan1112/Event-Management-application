@@ -27,7 +27,7 @@ public class CommentConverter {
                 .map(c-> toDto(c))
                 .collect(Collectors.toList());
     }
-    public List<CommentEntity> convertParticipatorsToEntity(List<CommentDTO> commentDTOList){
+    public List<CommentEntity> convertListCommentOfEventToEntity(List<CommentDTO> commentDTOList){
         return commentDTOList
                 .stream()
                 .map(c-> toEntity(c))

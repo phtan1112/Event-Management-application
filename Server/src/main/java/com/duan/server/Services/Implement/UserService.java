@@ -6,6 +6,7 @@ import com.duan.server.Converter.EventConverter;
 import com.duan.server.Converter.UserConverter;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.DTO.UserDTO;
+import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.UserEntity;
 import com.duan.server.Repository.UserRepository;
 import com.duan.server.Services.IUserService;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -292,16 +294,18 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO saveEventIntoEventSaveListByUser(int idEvent) {
-        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        UserDTO userDTO = findUserByEmail();
         EventDTO eventDTO = eventService.findById(idEvent);
-        if (userEntity != null && eventDTO != null) {
+        if (userDTO != null && eventDTO != null) {
             if (!checkEventIsInEventSavedListOrNot(
-                    userConverter.convertEventSavedListToDTO(
-                            userEntity.getList_events_saved())
-                    , eventDTO)) {
-                userEntity.addEventToSaveList(eventConverter.toEntity(eventDTO));
+                    userDTO.getList_events_saved(),
+                    eventDTO)) {
+                userDTO.addEventToSaveList(eventDTO);
+                UserEntity userEntity = userConverter.toEntity(userDTO);
+                userEntity.setList_events_saved(
+                        userConverter.convertEventSavedListToEntity(userDTO.getList_events_saved()));
                 userEntity = userRepository.save(userEntity);
-                UserDTO userDTO = userConverter.toDto(userEntity);
+                userDTO = userConverter.toDto(userEntity);
                 userDTO.setList_events_saved(
                         userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
                 return userDTO;
@@ -324,17 +328,18 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO removeEventFromEventSavedList(int idEvent) {
-        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        UserDTO userDTO = findUserByEmail();
         EventDTO eventDTO = eventService.findById(idEvent);
-        if (userEntity != null && eventDTO != null) {
+        if (userDTO != null && eventDTO != null) {
             if (checkEventIsInEventSavedListOrNot(
-                    userConverter.convertEventSavedListToDTO(
-                            userEntity.getList_events_saved())
+                    userDTO.getList_events_saved()
                     , eventDTO)) {
-                userEntity.removeEventToSaveList(eventConverter.toEntity(eventDTO));
-
+                userDTO.removeEventToSaveList(eventDTO);
+                UserEntity userEntity = userConverter.toEntity(userDTO);
+                userEntity.setList_events_saved(
+                        userConverter.convertEventSavedListToEntity(userDTO.getList_events_saved()));
                 userEntity = userRepository.save(userEntity);
-                UserDTO userDTO = userConverter.toDto(userEntity);
+                userDTO = userConverter.toDto(userEntity);
                 userDTO.setList_events_saved(
                         userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
                 return userDTO;
@@ -345,6 +350,27 @@ public class UserService implements IUserService, UserDetailsService {
         }
         return null;
     }
+
+    @Override
+    public Boolean removeAllEventOfSavedListEvent(int idEvent) {
+        List<UserEntity> userSaveEventList = userRepository.findAllByList_events_savedId(idEvent);
+
+        if(!userSaveEventList.isEmpty()){
+            for (UserEntity user : userSaveEventList) {
+                Set<EventEntity> savedEventsList = user.getList_events_saved();
+
+                // Xóa sự kiện khỏi danh sách
+                savedEventsList.removeIf(event -> event.getId().equals(idEvent));
+            }
+
+            // Lưu lại thay đổi vào cơ sở dữ liệu
+            userRepository.saveAll(userSaveEventList);
+            return true;
+        }
+
+        return false;
+    }
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
