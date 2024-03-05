@@ -3,8 +3,10 @@ package com.duan.server.Schedule;
 import com.duan.server.Configurations.Security.JWTService;
 import com.duan.server.DTO.EventDTO;
 import com.duan.server.Models.Token;
+import com.duan.server.Models.VerificationCode;
 import com.duan.server.Services.Implement.EventService;
 import com.duan.server.Services.Implement.TokenService;
+import com.duan.server.Services.Implement.VerificationService;
 import org.aspectj.lang.annotation.AdviceName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -30,6 +32,9 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
 
     @Autowired
     private JWTService jwtService;
+
+    @Autowired
+    private VerificationService verificationService;
 
     //auto change status when the status is start.
     @Async
@@ -83,12 +88,40 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
     @Scheduled(cron = "0 0 1 ? * SUN") // 1am every sunday
     // (cron = "0 40 15 * * *") second - minute - hour - day in month - month - day in week)
     public void removeTokenIsExpiredByCheckJWT() {
-        System.out.println("halisjfansfl");
         List<Token> lst_token = tokenService.getAllTokens();
         lst_token.forEach(token -> {
             if (jwtService.isTokenExpired(token.getToken())) {
                 tokenService.deleteTokenFromDatabase(token);
             }
         });
+    }
+
+    @Scheduled(fixedRate = 1000) // every second, the method will check the otp code is expired or not.
+    public void changeOTPExpired() {
+        List<VerificationCode> lst_otp = verificationService.getAll(false);
+        if(!lst_otp.isEmpty()){
+            lst_otp.forEach(otp -> {
+                if (checkExpiredOTP(otp.getCreateAt())) {
+                    verificationService.changeToExpired(otp.getId());
+                }
+            });
+        }
+    }
+    private Boolean checkExpiredOTP(LocalTime createAt){
+        LocalTime currentTime = LocalTime.now();
+        if(currentTime.isAfter(createAt.plusSeconds(60))){
+            return true;
+        }
+        return false;
+    }
+
+    @Async
+    @Scheduled(cron = "0 0 2 ? * SUN") // 2am every sunday
+    // (cron = "0 40 15 * * *") second - minute - hour - day in month - month - day in week)
+    public void deleteOTPExpired() {
+        List<VerificationCode> lst_otp = verificationService.getAll(true);
+        if(!lst_otp.isEmpty()){
+            verificationService.deleteAllOTP(lst_otp);
+        }
     }
 }

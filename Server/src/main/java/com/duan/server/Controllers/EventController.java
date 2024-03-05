@@ -113,7 +113,7 @@ public class EventController {
 
     @GetMapping("/all-events")
     public ResponseEntity<?> responseAllEvents(
-            @RequestParam("email") String email,
+            @Nullable @RequestParam("email") String email,
             @Nullable @RequestParam("statusCode") Integer codeEnd
     ) {
         try {

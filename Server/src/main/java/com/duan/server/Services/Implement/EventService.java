@@ -300,6 +300,23 @@ public class EventService implements IEventService {
                         .toList();
             }
         }
+        else{
+            if (codeEnd == null) {
+                lst = eventRepository
+                        .findAll()
+                        .stream()
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .toList();
+            }
+            if (codeEnd != null && codeEnd == 1) {
+                lst = eventRepository
+                        .findAll()
+                        .stream()
+                        .filter(e -> !e.getStatus().getEnded())
+                        .map(e -> eventConverter.entityConvertToResponseEvent(e))
+                        .toList();
+            }
+        }
         return lst != null ? lst : new ArrayList<>();
     }
 

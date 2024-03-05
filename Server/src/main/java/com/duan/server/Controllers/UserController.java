@@ -8,6 +8,7 @@ import com.duan.server.Request.RestorePasswordRequest;
 import com.duan.server.Response.CodeAndMessage;
 import com.duan.server.Response.ResponseUser;
 import com.duan.server.Services.IUserService;
+import com.duan.server.Services.Implement.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import java.util.Set;
 public class UserController {
     @Autowired
     private IUserService userService;
+
 
     @PostMapping("/register")
     @Transactional
@@ -90,16 +92,20 @@ public class UserController {
         return res;
     }
 
+
+
     @GetMapping("/get-info")
     public ResponseEntity<?> getUserInfoByEmail() {
         UserDTO userDTO = userService.findUserByEmail();
         if(userDTO != null) userDTO.setPassword("********************");
+
         return userDTO != null ?
                 new ResponseEntity<>(userDTO, HttpStatus.OK) :
                 new ResponseEntity<>(new CodeAndMessage(1,
                         "Not found user with email = "+ userDTO.getEmail()),
                         HttpStatus.BAD_REQUEST);
     }
+
     @GetMapping("/get-detail-by-admin/{email}")
     public ResponseEntity<?> getInfoUserByAdmin(@PathVariable("email") String email) {
         UserDTO userDTO = userService.getDetailUserByAdmin(email);

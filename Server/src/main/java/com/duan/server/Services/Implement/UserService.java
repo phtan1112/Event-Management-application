@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -59,6 +60,9 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Autowired
     private TokenService tokenService;
+
+
+
 
     @Override
     public String getUserEmailByAuthorization() {
@@ -104,6 +108,9 @@ public class UserService implements IUserService, UserDetailsService {
             return userDTO1;
         }
     }
+
+
+
 
     @Override
     public UserDTO findUserByEmail() {
@@ -355,7 +362,7 @@ public class UserService implements IUserService, UserDetailsService {
     public Boolean removeAllEventOfSavedListEvent(int idEvent) {
         List<UserEntity> userSaveEventList = userRepository.findAllByList_events_savedId(idEvent);
 
-        if(!userSaveEventList.isEmpty()){
+        if (!userSaveEventList.isEmpty()) {
             for (UserEntity user : userSaveEventList) {
                 Set<EventEntity> savedEventsList = user.getList_events_saved();
 
