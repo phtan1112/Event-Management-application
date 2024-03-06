@@ -62,6 +62,8 @@ public class UserService implements IUserService, UserDetailsService {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private MailService mailService;
 
 
 
@@ -103,6 +105,7 @@ public class UserService implements IUserService, UserDetailsService {
             UserDTO userDTO1 = userConverter.toDto(userEntity);
             userDTO1.setToken(null);
 
+            mailService.sendAccountRegistered(userDTO1.getEmail(),userDTO1);
             return userDTO1;
         }
     }

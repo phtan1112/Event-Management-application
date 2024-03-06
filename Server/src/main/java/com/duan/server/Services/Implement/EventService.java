@@ -49,6 +49,8 @@ public class EventService implements IEventService {
 
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private MailService mailService;
 
     @Override
     @Transactional
@@ -107,6 +109,9 @@ public class EventService implements IEventService {
                         new StatusDTO(true, false, false, eventDTO));
                 statusDTO.setEvent(null);
                 eventDTO.setStatus(statusDTO);
+
+                //send email when email is successful created
+                mailService.sendEventSuccessfulCreated(userDTO.getEmail(),eventDTO);
 
                 return eventDTO;
             }

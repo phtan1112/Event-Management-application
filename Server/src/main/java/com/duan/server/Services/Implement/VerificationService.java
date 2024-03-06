@@ -57,7 +57,7 @@ public class VerificationService {
         String otp = generateTo6NumberRandom();
         if (ValidateEmail.validateEmail(email)) {
             saveNewOTP(email,otp);
-            mailService.sendMail(email, otp);
+            mailService.sendVerificationCode(email, otp);
 
             return true;
         }
