@@ -1,10 +1,10 @@
-package com.duan.server.DTO;
+package com.duan.server.Request;
 
-public class LoginDto {
+public class LoginRequest {
     private  String email;
     private String password;
 
-    public LoginDto(String email, String password) {
+    public LoginRequest(String email, String password) {
         this.email = email;
         this.password = password;
     }

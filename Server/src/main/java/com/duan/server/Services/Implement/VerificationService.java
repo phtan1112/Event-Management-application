@@ -29,7 +29,9 @@ public class VerificationService {
         VerificationCode verificationCode = verificationRepository.findByEmailAndOtp(email, otp);
 
         if(verificationCode!= null){
-            return verificationCode.getIsExpired();
+            Boolean isExpired = verificationCode.getIsExpired();
+            changeToExpired(verificationCode.getId());
+            return isExpired;
         }
         return true;
     }

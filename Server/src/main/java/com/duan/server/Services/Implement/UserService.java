@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
+@Transactional
 public class UserService implements IUserService, UserDetailsService {
     @Autowired
     private UserRepository userRepository;
@@ -97,13 +98,10 @@ public class UserService implements IUserService, UserDetailsService {
             userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             userEntity.setCreatedAt(LocalDateTime.now());
 
-            String token = jwtService.generateToken(new CustomUserDetail(userEntity));
             userEntity = userRepository.save(userEntity);
 
-            tokenService.saveUserEntityIntoToken(userEntity, token);
-
             UserDTO userDTO1 = userConverter.toDto(userEntity);
-            userDTO1.setToken(token);
+            userDTO1.setToken(null);
 
             return userDTO1;
         }

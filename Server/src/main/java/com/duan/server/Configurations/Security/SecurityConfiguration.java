@@ -42,8 +42,7 @@ public class SecurityConfiguration {
         return http
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(author -> author
-                        //verification
-                        .requestMatchers(HttpMethod.GET, "/api/v1/verify/**").permitAll()
+
                         //user
                         .requestMatchers(HttpMethod.GET, "/user/get-info").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.GET, "/user/get-detail-by-admin/**").hasAuthority("ROLE_ADMIN")
@@ -82,7 +81,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
-
+                        //verification
+                        .requestMatchers(HttpMethod.GET, "/api/v1/verify/**").permitAll()
 
                         //disallow everything else
                         .anyRequest().authenticated()

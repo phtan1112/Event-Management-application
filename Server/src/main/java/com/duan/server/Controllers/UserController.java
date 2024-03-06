@@ -1,14 +1,14 @@
 package com.duan.server.Controllers;
 
 import com.duan.server.DTO.EventDTO;
-import com.duan.server.DTO.LoginDto;
+import com.duan.server.Request.LoginRequest;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Request.ChangePasswordRequest;
+import com.duan.server.Request.RegisterRequest;
 import com.duan.server.Request.RestorePasswordRequest;
 import com.duan.server.Response.CodeAndMessage;
 import com.duan.server.Response.ResponseUser;
 import com.duan.server.Services.IUserService;
-import com.duan.server.Services.Implement.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
@@ -22,7 +22,6 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/user")
-@Transactional
 public class UserController {
     @Autowired
     private IUserService userService;
@@ -30,9 +29,10 @@ public class UserController {
 
     @PostMapping("/register")
     @Transactional
-    public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
         try {
-            UserDTO userDTO1 = userService.persist(userDTO);
+            UserDTO userDTO1 = userService.persist(
+                    new UserDTO(registerRequest.getFullName(), registerRequest.getEmail(), registerRequest.getPassword()));
             if (userDTO1 != null) {
                 userDTO1.setPassword("********************");
                 ResponseUser ru = new ResponseUser();
@@ -54,10 +54,10 @@ public class UserController {
 
     @PostMapping("/login")
     @Transactional
-    public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
-            UserDTO userDTO = userService.findUserByEmailAndPassword(loginDto.getEmail(),
-                    loginDto.getPassword());
+            UserDTO userDTO = userService.findUserByEmailAndPassword(loginRequest.getEmail(),
+                    loginRequest.getPassword());
             if (userDTO.getId() != null) {
                 userDTO.setPassword("********************");
                 ResponseUser ru = new ResponseUser();

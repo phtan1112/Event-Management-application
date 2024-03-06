@@ -1,6 +1,8 @@
 package com.duan.server.DTO;
 
 import com.duan.server.Models.EventEntity;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,8 +26,9 @@ public class UserDTO {
     private LocalDateTime createdAt;
     private int login_times;
     private Set<EventDTO> list_events_saved = new HashSet<>();
-
     private String token;
+
+
     public void addEventToSaveList(EventDTO e){
         if(list_events_saved == null){
             this.list_events_saved = new HashSet<>();
