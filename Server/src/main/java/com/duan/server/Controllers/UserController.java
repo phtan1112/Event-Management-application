@@ -215,6 +215,7 @@ public class UserController {
                             , HttpStatus.BAD_REQUEST);
 
         }catch (Exception e){
+            e.printStackTrace();
             return new ResponseEntity<>(CodeAndMessage.builder()
                     .code(1)
                     .message("Fail to upload avatar of user!!" +

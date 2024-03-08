@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 
@@ -71,38 +72,57 @@ public class EventService implements IEventService {
         UserDTO userDTO = userService.findUserByEmail(emailUser);
         //get userDTO by typeEvent
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
-
+        String i1 = "";
+        String i2 = "";
+        String i3 = "";
+        String i4 = "";
         if (userDTO.getId() != null && categoryDTO.getId() != null &&
-                checkStartDateAndTimeStartIsAfterOrNot(date_start)) {
+                checkStartDateAndTimeStartIsAfterOrNot(date_start) // if images is not sent from client => set null for image.
+        ) {
             //get URL image after uploaded on Cloudinary
-            List<String> urls = Arrays.stream(images).map(image -> imageService.uploadImage(image)).toList();
 
+
+            try {
+                i1 = imageService.uploadImage(images[0]).get();
+                i2 = imageService.uploadImage(images[1]).get();
+                i3 = imageService.uploadImage(images[2]).get();
+                i4 = imageService.uploadImage(images[3]).get();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+
+            EventDTO eventDTO = EventDTO.builder()
+                    .title(title)
+                    .description(description)
+                    .place(place)
+                    .latitude(latitude)
+                    .longitude(longitude)
+                    .star(0.0)
+                    .cancel(false)
+                    .date_start(date_start)
+                    .time_start(time_start)
+                    .time_end(time_end)
+                    .createdAt(LocalDate.now())
+                    .user(userDTO)
+                    .category(categoryDTO)
+                    .participators(new HashSet<>())
+                    .build();
+
+            //persist to database
+            EventEntity eventEntity = eventConverter.toEntity(eventDTO);
+            List<String> urls = List.of(i1, i2, i3, i4);
             if (urls.size() == 4) {
-                EventDTO eventDTO = EventDTO.builder()
-                        .title(title)
-                        .description(description)
-                        .image1(urls.get(0))
-                        .image2(urls.get(1))
-                        .image3(urls.get(2))
-                        .image4(urls.get(3))
-                        .place(place)
-                        .latitude(latitude)
-                        .longitude(longitude)
-                        .star(0.0)
-                        .cancel(false)
-                        .date_start(date_start)
-                        .time_start(time_start)
-                        .time_end(time_end)
-                        .createdAt(LocalDate.now())
-                        .user(userDTO)
-                        .category(categoryDTO)
-                        .participators(new HashSet<>())
-                        .build();
-
-                //persist to database
-                EventEntity eventEntity = eventConverter.toEntity(eventDTO);
+                eventEntity.setImage1(urls.get(0));
+                eventEntity.setImage2(urls.get(1));
+                eventEntity.setImage3(urls.get(2));
+                eventEntity.setImage4(urls.get(3));
                 eventEntity = eventRepository.save(eventEntity);
                 eventDTO = eventConverter.toDTO(eventEntity);
+                //send email when email is successful created
+                mailService.sendEventSuccessfulCreated(userDTO.getEmail(), eventDTO);
 
                 //generate status for event after created
                 StatusDTO statusDTO = statusService.generate(
@@ -110,8 +130,6 @@ public class EventService implements IEventService {
                 statusDTO.setEvent(null);
                 eventDTO.setStatus(statusDTO);
 
-                //send email when email is successful created
-                mailService.sendEventSuccessfulCreated(userDTO.getEmail(),eventDTO);
 
                 return eventDTO;
             }
@@ -269,7 +287,13 @@ public class EventService implements IEventService {
         EventDTO eventDTO = findById(idEvent);
         List<String> urls = new ArrayList<>();
         for (MultipartFile image : images) {
-            urls.add(imageService.uploadImage(image));
+            try {
+                urls.add(imageService.uploadImage(image).get());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
         }
         eventDTO.setImage1(urls.get(0));
         eventDTO.setImage2(urls.get(1));
@@ -304,8 +328,7 @@ public class EventService implements IEventService {
                         .map(e -> eventConverter.entityConvertToResponseEvent(e))
                         .toList();
             }
-        }
-        else{
+        } else {
             if (codeEnd == null) {
                 lst = eventRepository
                         .findAll()
@@ -702,6 +725,12 @@ public class EventService implements IEventService {
 
             userService.removeAllEventOfSavedListEvent(eventDTO.getId());
             eventRepository.delete(eventEntity);
+
+            //delete 4 pictures
+            imageService.removeImageExist(eventDTO.getImage1());
+            imageService.removeImageExist(eventDTO.getImage2());
+            imageService.removeImageExist(eventDTO.getImage3());
+            imageService.removeImageExist(eventDTO.getImage4());
 
             return true;
         }

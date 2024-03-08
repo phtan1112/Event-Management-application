@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "token")
 @NoArgsConstructor
@@ -25,6 +27,8 @@ public class Token {
     private boolean revoked;
 
     private boolean expired;
+
+    private LocalDateTime createAt;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)

@@ -94,8 +94,11 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
                 tokenService.deleteTokenFromDatabase(token);
             }
         });
+        System.out.println("------------------CLEAR TOKEN EXPIRED SUCCESSFULLY------------------");
+        System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
     }
 
+    @Async
     @Scheduled(fixedRate = 1000) // every second, the method will check the otp code is expired or not.
     public void changeOTPExpired() {
         List<VerificationCode> lst_otp = verificationService.getAll(false);
@@ -123,5 +126,7 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
         if(!lst_otp.isEmpty()){
             verificationService.deleteAllOTP(lst_otp);
         }
+        System.out.println("------------------CLEAR VERIFICATION CODE EXPIRED SUCCESSFULLY------------------");
+        System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
     }
 }

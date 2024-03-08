@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
+import java.util.concurrent.Executor;
 
 @Service
 public class MailService {
@@ -19,6 +21,10 @@ public class MailService {
     @Value("${spring.mail.username}")
     private String mailOwner;
 
+    @Autowired
+    private Executor asyncExecutor;
+
+
     private void sendMail(String toMail,String text,String subject){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setFrom(mailOwner);
@@ -27,7 +33,7 @@ public class MailService {
         simpleMailMessage.setTo(toMail);
         mailSender.send(simpleMailMessage);
     }
-
+    @Async
     public void sendVerificationCode(String toMail,String verifyCode){
             String name = toMail.split("@")[0];
             String textBlockRender =
@@ -47,7 +53,7 @@ public class MailService {
             sendMail(toMail,text,subject);
 
     }
-
+    @Async
     public void sendEventSuccessfulCreated(String toMail, EventDTO eventDTO){
         String name = toMail.split("@")[0];
         String textBlockRender =
@@ -88,7 +94,7 @@ public class MailService {
         sendMail(toMail,text,subject);
 
     }
-
+    @Async
     public void sendAccountRegistered(String toMail, UserDTO userDTO){
         String name = toMail.split("@")[0];
         String textBlockRender =

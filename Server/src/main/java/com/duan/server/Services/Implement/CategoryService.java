@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class CategoryService implements ICategoryService {
@@ -26,7 +27,14 @@ public class CategoryService implements ICategoryService {
 
     @Override
     public CategoryDTO persist(MultipartFile image, String typeOfEvent) {
-        String urlImage = imageService.uploadImage(image);
+        String urlImage = null;
+        try {
+            urlImage = imageService.uploadImage(image).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
         if(urlImage!=null){
             CategoryDTO categoryDTO = new CategoryDTO(urlImage,typeOfEvent);
             CategoryEntity categoryEntity = categoryRepository.save(categoryConverter.toEntity(categoryDTO));

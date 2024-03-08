@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -66,7 +68,6 @@ public class UserService implements IUserService, UserDetailsService {
     private MailService mailService;
 
 
-
     @Override
     public String getUserEmailByAuthorization() {
         //find email user through Authorization
@@ -95,7 +96,7 @@ public class UserService implements IUserService, UserDetailsService {
             userEntity.setLogin_times(1);
             userEntity.setRole("ROLE_USER");
             if (userEntity.getAvatar() == null) {
-                userEntity.setAvatar("https://res.cloudinary.com/dt7a2rxcl/image/upload/v1709138703/defaultAvtUser_vfuca0.jpg");
+                userEntity.setAvatar("https://res.cloudinary.com/dt7a2rxcl/image/upload/v1709819363/defaultAvtUser_csavc3.jpg");
             }
             userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
             userEntity.setCreatedAt(LocalDateTime.now());
@@ -105,12 +106,10 @@ public class UserService implements IUserService, UserDetailsService {
             UserDTO userDTO1 = userConverter.toDto(userEntity);
             userDTO1.setToken(null);
 
-            mailService.sendAccountRegistered(userDTO1.getEmail(),userDTO1);
+            mailService.sendAccountRegistered(userDTO1.getEmail(), userDTO1);
             return userDTO1;
         }
     }
-
-
 
 
     @Override
@@ -280,13 +279,25 @@ public class UserService implements IUserService, UserDetailsService {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
                 if (emailFromAuthorization.equals(email)) {
-                    String urlImageUploaded = imageService.uploadImage(image);
-                    if (urlImageUploaded != null) {
-                        imageService.removeImageExist(userDTO.getAvatar());
-                        userDTO.setAvatar(urlImageUploaded);
-                        UserEntity userEntity = userRepository.save(userConverter.toEntity(userDTO));
-                        return userConverter.toDto(userEntity);
+                    try {
+                        if (imageService.checkImageIsValid(image).get()) {
+                            Future<String> urlImageUploaded = imageService.uploadImage(image);
+                            if (urlImageUploaded != null) {
+                                imageService.removeImageExist(userDTO.getAvatar());
+
+                                userDTO.setAvatar(urlImageUploaded.get());
+
+                                UserEntity userEntity = userRepository.save(userConverter.toEntity(userDTO));
+                                return userConverter.toDto(userEntity);
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    } catch (ExecutionException e) {
+                        throw new RuntimeException(e);
                     }
+
+
                 }
             }
         }

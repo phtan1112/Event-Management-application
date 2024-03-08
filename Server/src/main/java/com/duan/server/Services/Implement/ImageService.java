@@ -2,24 +2,18 @@ package com.duan.server.Services.Implement;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.duan.server.DTO.UserDTO;
 import com.duan.server.Services.IImageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 @Service
 @Transactional
@@ -28,40 +22,48 @@ public class ImageService implements IImageService {
     @Autowired
     private Cloudinary cloudinary;
 
+
     // accept list kind of images
-    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = List.of("jpg", "jpeg", "png");
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = List.of("jpg", "jpeg", "png","HEIC");
     // id of default image user
-    private static final String DEFAULT_IMAGE_USER = "sqytlfts5l2ymqkfhb56";
+    private static final String DEFAULT_IMAGE_USER = "defaultAvtUser_csavc3";
 
+    @Autowired
+    private Executor asyncExecutor;
 
+    @Async
     @Override
-    public String uploadImage(MultipartFile image) {
+    public Future<String> uploadImage(MultipartFile image) {
         try {
             //verify picture
-            String originalFilename = image.getOriginalFilename();
-
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
-            if (!ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension)) {
-                return null;
-            }
             // Upload to Cloudinary
-            Map<String, Object> uploadResult = cloudinary
-                    .uploader()
-                    .upload(image.getBytes(),
-                            ObjectUtils.emptyMap());
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
             // get url when upload successful
             String imageUrl = (String) uploadResult.get("secure_url");
 
-            return imageUrl;
+            return CompletableFuture.completedFuture(imageUrl);
 
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
+    @Async
+    @Override
+    public Future<Boolean> checkImageIsValid(MultipartFile image) {
+        String originalFilename = image.getOriginalFilename();
 
+        if(originalFilename != null){
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+            if (!ALLOWED_IMAGE_EXTENSIONS.contains(fileExtension)) {
+                return CompletableFuture.completedFuture(false);
+            }
+            return CompletableFuture.completedFuture(true);
+        }
+        return CompletableFuture.completedFuture(false);
+    }
 
-
+    @Async
     @Override
     public void removeImageExist(String urlImage) {
         try {
