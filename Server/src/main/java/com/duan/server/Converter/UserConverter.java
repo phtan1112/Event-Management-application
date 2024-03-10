@@ -31,18 +31,20 @@ public class UserConverter {
     }
     public UserEntity toEntity(UserDTO userDTO) {
         UserEntity userEntity = new UserEntity();
-        if (userDTO.getId() != null) {
-            userEntity.setId(userDTO.getId());
+        if(userDTO !=null){
+            if ( userDTO.getId() != null) {
+                userEntity.setId(userDTO.getId());
+            }
+            userEntity.setFullName(userDTO.getFullName());
+            userEntity.setEmail(userDTO.getEmail());
+            userEntity.setPassword(userDTO.getPassword());
+            userEntity.setAvatar(userDTO.getAvatar());
+            userEntity.setRole(userDTO.getRole());
+            if(userDTO.getCreatedAt() != null){
+                userEntity.setCreatedAt(userDTO.getCreatedAt());
+            }
+            userEntity.setLogin_times(userDTO.getLogin_times());
         }
-        userEntity.setFullName(userDTO.getFullName());
-        userEntity.setEmail(userDTO.getEmail());
-        userEntity.setPassword(userDTO.getPassword());
-        userEntity.setAvatar(userDTO.getAvatar());
-        userEntity.setRole(userDTO.getRole());
-        if(userDTO.getCreatedAt() != null){
-            userEntity.setCreatedAt(userDTO.getCreatedAt());
-        }
-        userEntity.setLogin_times(userDTO.getLogin_times());
         return userEntity;
     }
 

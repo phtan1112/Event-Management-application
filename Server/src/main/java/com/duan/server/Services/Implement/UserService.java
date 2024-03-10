@@ -9,6 +9,7 @@ import com.duan.server.DTO.UserDTO;
 import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.UserEntity;
 import com.duan.server.Repository.UserRepository;
+import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IUserService;
 import com.duan.server.Validators.ValidateEmail;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -377,17 +374,19 @@ public class UserService implements IUserService, UserDetailsService {
         if (!userSaveEventList.isEmpty()) {
             for (UserEntity user : userSaveEventList) {
                 Set<EventEntity> savedEventsList = user.getList_events_saved();
-
-                // Xóa sự kiện khỏi danh sách
                 savedEventsList.removeIf(event -> event.getId().equals(idEvent));
             }
-
-            // Lưu lại thay đổi vào cơ sở dữ liệu
             userRepository.saveAll(userSaveEventList);
             return true;
         }
 
         return false;
+    }
+
+    @Override
+    public List<ResponseEvent> getAllEventsParticipated() {
+        List<ResponseEvent> listEventParticipated = eventService.getAllEventsByUserParticipated(findUserByEmail().getId());
+        return listEventParticipated.isEmpty() ? new ArrayList<>() : listEventParticipated;
     }
 
 

@@ -32,4 +32,6 @@ public interface IUserService {
     UserDTO removeEventFromEventSavedList(int idEvent);
 
     Boolean removeAllEventOfSavedListEvent(int idEvent);
+
+    List<ResponseEvent> getAllEventsParticipated();
 }

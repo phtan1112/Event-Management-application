@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class EventDTO {
     private LocalDate date_start;
     private LocalTime time_start;
     private LocalTime  time_end;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private UserDTO user;
     private CategoryDTO category;
     private StatusDTO status;
@@ -62,7 +63,7 @@ public class EventDTO {
                     String place,Double latitude,Double longitude,
                     Boolean cancel, LocalDate date_start,
                     LocalTime time_start,LocalTime  time_end,
-                    LocalDate createdAt, UserDTO user, CategoryDTO category) {
+                    LocalDateTime createdAt, UserDTO user, CategoryDTO category) {
         this.title = title;
         this.description = description;
         this.image1 = image1;

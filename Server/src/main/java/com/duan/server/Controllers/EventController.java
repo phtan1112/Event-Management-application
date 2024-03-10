@@ -41,8 +41,6 @@ public class EventController {
                                          @RequestParam("latitude") Double latitude,
                                          @RequestParam("longitude") Double longitude
     ) {
-
-
         EventDTO eventDTO = eventService.persistEvent(
                 images,
                 title,
@@ -57,13 +55,13 @@ public class EventController {
                     ResponseObject
                             .builder()
                             .code(0)
-                            .message("create event successful")
+                            .message("create event successful with id = " + eventDTO.getId())
                             .object(eventDTO)
                             .build(), HttpStatus.OK);
         } else {
             CodeAndMessage cm = new CodeAndMessage();
             cm.setCode(1);
-            cm.setMessage("Fail to create event!!");
+            cm.setMessage("Fail to create event, Please check the value of event!!");
             return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
     }
@@ -323,15 +321,19 @@ public class EventController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @GetMapping("/view-event") //1 is created, 2 is operating, 3 is ended
+
+    
+
+    @GetMapping("/view-event")
     public ResponseEntity<?> viewEventByUserAndStatus(
             @Nullable @RequestParam("statusCode") Integer statusCode, // [1,3]
             @Nullable @RequestParam("starStart") Integer starStart, // [0,4]
             @Nullable @RequestParam("starEnd") Integer starEnd, // [1,5]
+            @Nullable @RequestParam("star") Integer star, // [1,5], if 3 so will get from 0 to 3
             @Nullable @RequestParam("typeOfDate") Integer typeOfDate,//today(1),yesterday(2),within7days(3),thismonth(4)
             @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateStart") LocalDate dateStart,
             @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateEnd") LocalDate dateEnd
-            //date for createAt
+
     ) {
         
         List<ResponseEvent> result =
@@ -339,6 +341,7 @@ public class EventController {
                         statusCode,
                         starStart,
                         starEnd,
+                        star,
                         typeOfDate,
                         dateStart,dateEnd
 
@@ -352,9 +355,9 @@ public class EventController {
             return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/event-upcoming") //1 is created, 2 is operating, 3 is ended
+    @GetMapping("/event-upcoming")
     public ResponseEntity<?> viewEventByUserAndStatus(
-            @Nullable @RequestParam("number-days") Integer dayUpcoming // before current date
+            @RequestParam("number-days") Integer dayUpcoming // before current date
     ) {
 
         List<ResponseEvent> result =
@@ -371,8 +374,7 @@ public class EventController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> removeEventAndAddIntoTrash(@PathVariable("id") Integer idEvent){
-        Boolean check  =eventService.deleteEvent(idEvent);
-        CodeAndMessage cm = new CodeAndMessage();
+        Boolean check  = eventService.deleteEvent(idEvent);
         return check ? new ResponseEntity<>(
                 CodeAndMessage
                         .builder().code(0).message("Delete event with id = " + idEvent + " successfully!")

@@ -9,6 +9,7 @@ import lombok.*;
 
 import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -60,8 +61,8 @@ public class EventEntity {
     @JsonFormat(pattern = "h:mm")
     private LocalTime  time_end;
 
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH-mm")
+    private LocalDateTime createdAt;
 
 
     @ManyToOne
@@ -118,7 +119,7 @@ public class EventEntity {
                        String image3,
                        String image4, String place,
                        Boolean cancel, LocalDate date_start,
-                       LocalTime time_start,LocalTime time_end, LocalDate createdAt) {
+                       LocalTime time_start,LocalTime time_end, LocalDateTime createdAt) {
         this.title = title;
         this.description = description;
         this.image1 = image1;

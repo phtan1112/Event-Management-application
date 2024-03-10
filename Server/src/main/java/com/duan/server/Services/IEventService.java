@@ -6,6 +6,7 @@ import com.duan.server.DTO.StatusDTO;
 import com.duan.server.DTO.UserDTO;
 import com.duan.server.Response.ResponseEvent;
 import jakarta.annotation.Nullable;
+import jdk.jfr.consumer.EventStream;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public interface IEventService {
     EventDTO persistEvent( MultipartFile[] images,
@@ -24,7 +26,7 @@ public interface IEventService {
                            LocalTime time_start,
                            LocalTime time_end,
                            String description,
-                           String place, Double latitude, Double longitude);
+                           String place, Double latitude, Double longitude) throws ExecutionException, InterruptedException;
 
     EventDTO findById(int id);
     StatusDTO findStatusByEvent(int idEvent);
@@ -49,13 +51,14 @@ public interface IEventService {
 
     void calculateStarOfEvent(int idEvent);
     List<ResponseEvent> viewEventByUserAndStatus(Integer statusCode,
-                                                 Integer starStart,Integer starEnd,
+                                                 Integer starStart,Integer starEnd,Integer star,
                                                  Integer typeOfDate,
                                                  LocalDate dateStart, LocalDate dateEnd);
     List<ResponseEvent> viewUpcomingEventByDateStart(Integer numberDays);
 
     Boolean deleteEvent(Integer idEvent);
 
+    List<ResponseEvent> getAllEventsByUserParticipated(Integer idUser);
 
 
 }

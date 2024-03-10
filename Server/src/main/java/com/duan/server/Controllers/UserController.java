@@ -7,6 +7,7 @@ import com.duan.server.Request.ChangePasswordRequest;
 import com.duan.server.Request.RegisterRequest;
 import com.duan.server.Request.RestorePasswordRequest;
 import com.duan.server.Response.CodeAndMessage;
+import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Response.ResponseUser;
 import com.duan.server.Services.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -267,7 +269,7 @@ public class UserController {
         }
     }
     @PostMapping("/remove-event")
-    public ResponseEntity<?> removeEvent(
+    public ResponseEntity<?> removeEventFromSaveList(
             @Param("idEvent") int idEvent
     ){
         try{
@@ -287,4 +289,25 @@ public class UserController {
                     .build(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping("/all-events-participated")
+    public ResponseEntity<?> seeEventsParticipated(){
+        try{
+            List<ResponseEvent> lstEventParticipated = userService.getAllEventsParticipated();
+
+            return !lstEventParticipated.isEmpty() ?
+                    new ResponseEntity<>(lstEventParticipated, HttpStatus.OK) :
+                    new ResponseEntity<>(new CodeAndMessage(1,
+                            "There are no events participated!!")
+                            , HttpStatus.BAD_REQUEST);
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(CodeAndMessage.builder()
+                    .code(1)
+                    .message("error from server, please try again!!")
+                    .build(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 }

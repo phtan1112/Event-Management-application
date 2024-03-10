@@ -7,6 +7,7 @@ import com.duan.server.Models.CommentEntity;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +37,7 @@ public class ResponseEvent {
     private LocalDate date_start;
     private LocalTime time_start;
     private LocalTime  time_end;
-    private LocalDate  createAt;
+    private LocalDateTime createAt;
     private UserDTO user;
     private CategoryDTO category;
     private ResponseStatus status;

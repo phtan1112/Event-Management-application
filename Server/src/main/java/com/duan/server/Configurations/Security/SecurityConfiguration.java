@@ -56,6 +56,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/user/all-event-saved").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.POST, "/user/remove-event/**").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.PUT, "/user/restore-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user/all-events-participated").hasAuthority("ROLE_USER")
+
 
                         //category
                         .requestMatchers(HttpMethod.POST, "/api/v1/category/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")

@@ -5,6 +5,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.duan.server.Services.IImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +18,7 @@ import java.util.concurrent.Future;
 
 @Service
 @Transactional
+@EnableAsync
 public class ImageService implements IImageService {
 
     @Autowired
@@ -31,16 +33,15 @@ public class ImageService implements IImageService {
     @Autowired
     private Executor asyncExecutor;
 
-    @Async
+
+    @Async("asyncExecutor")
     @Override
     public Future<String> uploadImage(MultipartFile image) {
         try {
-            //verify picture
             // Upload to Cloudinary
             Map<String, Object> uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
             // get url when upload successful
             String imageUrl = (String) uploadResult.get("secure_url");
-
             return CompletableFuture.completedFuture(imageUrl);
 
         } catch (IOException e) {
@@ -48,7 +49,7 @@ public class ImageService implements IImageService {
             return null;
         }
     }
-    @Async
+    @Async("asyncExecutor")
     @Override
     public Future<Boolean> checkImageIsValid(MultipartFile image) {
         String originalFilename = image.getOriginalFilename();
@@ -63,7 +64,7 @@ public class ImageService implements IImageService {
         return CompletableFuture.completedFuture(false);
     }
 
-    @Async
+    @Async("asyncExecutor")
     @Override
     public void removeImageExist(String urlImage) {
         try {
@@ -85,6 +86,4 @@ public class ImageService implements IImageService {
         String fileName = parts[parts.length - 1];
         return fileName.substring(0, fileName.lastIndexOf("."));
     }
-
-
 }
