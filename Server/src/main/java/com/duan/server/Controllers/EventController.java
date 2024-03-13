@@ -329,7 +329,7 @@ public class EventController {
             @Nullable @RequestParam("statusCode") Integer statusCode, // [1,3]
             @Nullable @RequestParam("starStart") Integer starStart, // [0,4]
             @Nullable @RequestParam("starEnd") Integer starEnd, // [1,5]
-            @Nullable @RequestParam("star") Integer star, // [1,5], if 3 so will get from 0 to 3
+            @Nullable @RequestParam("star") Integer star, // [0,5], if 3 so will get from 0 to 3
             @Nullable @RequestParam("typeOfDate") Integer typeOfDate,//today(1),yesterday(2),within7days(3),thismonth(4)
             @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateStart") LocalDate dateStart,
             @Nullable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam("dateEnd") LocalDate dateEnd

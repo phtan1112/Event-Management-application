@@ -36,11 +36,10 @@ public class UserController {
             UserDTO userDTO1 = userService.persist(
                     new UserDTO(registerRequest.getFullName(), registerRequest.getEmail(), registerRequest.getPassword()));
             if (userDTO1 != null) {
-                userDTO1.setPassword("********************");
                 ResponseUser ru = new ResponseUser();
                 ru.setCode(0); //success
                 ru.setMessage("Register user successfully");
-                ru.setUserDTO(userDTO1);
+                ru.setUser(userDTO1);
                 return new ResponseEntity<>(ru, HttpStatus.OK);
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
@@ -61,11 +60,10 @@ public class UserController {
             UserDTO userDTO = userService.findUserByEmailAndPassword(loginRequest.getEmail(),
                     loginRequest.getPassword());
             if (userDTO.getId() != null) {
-                userDTO.setPassword("********************");
                 ResponseUser ru = new ResponseUser();
                 ru.setCode(0); //success
                 ru.setMessage("login successfully");
-                ru.setUserDTO(userDTO);
+                ru.setUser(userDTO);
                 return new ResponseEntity<>(ru, HttpStatus.OK);
             } else {
                 CodeAndMessage cm = new CodeAndMessage();
@@ -99,7 +97,6 @@ public class UserController {
     @GetMapping("/get-info")
     public ResponseEntity<?> getUserInfoByEmail() {
         UserDTO userDTO = userService.findUserByEmail();
-        if(userDTO != null) userDTO.setPassword("********************");
 
         return userDTO != null ?
                 new ResponseEntity<>(userDTO, HttpStatus.OK) :
@@ -111,7 +108,6 @@ public class UserController {
     @GetMapping("/get-detail-by-admin/{email}")
     public ResponseEntity<?> getInfoUserByAdmin(@PathVariable("email") String email) {
         UserDTO userDTO = userService.getDetailUserByAdmin(email);
-        if(userDTO != null) userDTO.setPassword("********************");
         return userDTO != null ?
                 new ResponseEntity<>(userDTO, HttpStatus.OK) :
                 new ResponseEntity<>(new CodeAndMessage(1, "Not found user with email = "+ email), HttpStatus.BAD_REQUEST);
@@ -145,11 +141,10 @@ public class UserController {
                 restorePasswordRequest.getPassword());
 
         if (userDTO != null) {
-            userDTO.setPassword("********************");
             ResponseUser ru = new ResponseUser();
             ru.setCode(0); //success
             ru.setMessage("Restore password of user successfully");
-            ru.setUserDTO(userDTO);
+            ru.setUser(userDTO);
             return new ResponseEntity<>(ru, HttpStatus.OK);
         }
         else {
@@ -208,7 +203,6 @@ public class UserController {
                                               @RequestParam("email") String email){
         try{
             UserDTO userDTO = userService.uploadAvatarUserByEmail(email,image);
-            if(userDTO != null) userDTO.setPassword(("********************"));
 
             return userDTO != null ?
                     new ResponseEntity<>(new ResponseUser(0,"Upload avatar successful",userDTO), HttpStatus.OK) :

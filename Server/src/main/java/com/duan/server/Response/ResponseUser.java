@@ -12,5 +12,5 @@ import lombok.*;
 public class ResponseUser {
     private int code;
     private String message;
-    private UserDTO userDTO;
+    private UserDTO user;
 }

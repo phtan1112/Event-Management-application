@@ -11,6 +11,7 @@ import com.duan.server.Services.IEventService;
 import jdk.jfr.consumer.EventStream;
 import org.apache.catalina.User;
 import org.apache.commons.math3.util.Precision;
+import org.apache.tomcat.jni.Library;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.scheduling.annotation.Async;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 
@@ -63,6 +65,22 @@ public class EventService implements IEventService {
     @Autowired
     private Executor asyncExecutor;
 
+    private Boolean checkImageIsValidOrNot(MultipartFile[] images) {
+        Boolean checkImage = true;
+        for (MultipartFile file : images) {
+            Future<Boolean> checkImageService = imageService.checkImageIsValid(file);
+            try {
+                checkImage = checkImageService.get();
+                if (!checkImage) break;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+        return checkImage;
+    }
 
     @Override
     @Transactional
@@ -84,9 +102,9 @@ public class EventService implements IEventService {
         //get userDTO by typeEvent
         CategoryDTO categoryDTO = categoryService.findByType(typeOfEvent);
 
-        if (userDTO.getId() != null && categoryDTO.getId() != null &&
+        if (userDTO != null && categoryDTO != null &&
                 checkStartDateAndTimeStartIsAfterOrNot(date_start, time_start, time_end) && // start event is always after now date.
-                !eventRepository.existsByTitle(title)
+                !eventRepository.existsByTitle(title) && checkImageIsValidOrNot(images)
         ) {
             List<String> urls = new ArrayList<>();
 
@@ -141,7 +159,7 @@ public class EventService implements IEventService {
             statusDTO.setEvent(null);
             eventDTO.setStatus(statusDTO);
 
-
+            eventDTO.getUser().setPassword("***************");
             return eventDTO;
         }
         return null;
@@ -224,7 +242,7 @@ public class EventService implements IEventService {
     public Boolean cancelEvent(int id) {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
-        EventEntity eventEntity = eventRepository.findByIdAndUser(id, userConverter.toEntity(userDTO));
+        EventEntity eventEntity = eventRepository.findByIdAndUser(id, userConverter.toEntityNotHidePassword(userDTO));
         if (eventEntity != null && !eventEntity.getCancel()) {
             eventEntity.setCancel(true);
             eventRepository.save(eventEntity);
@@ -237,7 +255,7 @@ public class EventService implements IEventService {
     public Boolean permitEvent(int id) {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
-        EventEntity eventEntity = eventRepository.findByIdAndUser(id, userConverter.toEntity(userDTO));
+        EventEntity eventEntity = eventRepository.findByIdAndUser(id, userConverter.toEntityNotHidePassword(userDTO));
         if (eventEntity != null && eventEntity.getCancel()) {
             eventEntity.setCancel(false);
             eventRepository.save(eventEntity);
@@ -271,24 +289,16 @@ public class EventService implements IEventService {
     public ResponseEvent changeAnyDataOfEvent(int idEvent, Map<Object, Object> fields) {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
-        EventEntity eventEntity = eventRepository.findByIdAndUser(idEvent, userConverter.toEntity(userDTO));
+        EventEntity eventEntity = eventRepository.findByIdAndUser(idEvent, userConverter.toEntityNotHidePassword(userDTO));
         if (eventEntity != null && !eventEntity.getCancel()) {
             fields.forEach((key, value) -> {
                 String parseKey = (String) key;
-
-                if (parseKey.equalsIgnoreCase("user_email")) {
-                    parseKey = "user";
-                    value = userConverter.toEntity(userService.findUserByEmail(String.valueOf(value)));
-                }
                 if (parseKey.equalsIgnoreCase("category_type")) {
                     parseKey = "category";
                     value = categoryConverter.toEntity(categoryService.findByType(String.valueOf(value)));
                 }
-
-
                 Field field = ReflectionUtils.findField(EventEntity.class, parseKey);
                 field.setAccessible(true);
-                System.out.println(parseKey);
 
 
                 ReflectionUtils.setField(field, eventEntity, value);
@@ -398,7 +408,7 @@ public class EventService implements IEventService {
         List<ResponseEvent> lst = null;
         UserDTO userDTO = userService.findUserByEmail(email);
         if (userDTO != null) {
-            if (codeEnd == null) {
+            if (codeEnd == null) { // code ==null => get event that is still end
                 lst = eventRepository
                         .findAllByCategoryEqual(typeOfEvent)
                         .stream()
@@ -406,7 +416,7 @@ public class EventService implements IEventService {
                         .map(e -> eventConverter.entityConvertToResponseEvent(e))
                         .collect(Collectors.toList());
             }
-            if (codeEnd != null && codeEnd == 1) {
+            if (codeEnd != null && codeEnd == 1) { // code =1 is not end
                 lst = eventRepository
                         .findAllByCategoryEqual(typeOfEvent)
                         .stream()
@@ -426,7 +436,7 @@ public class EventService implements IEventService {
         List<ResponseEvent> lst = null;
         UserDTO userDTO = userService.findUserByEmail(email);
         if (userDTO != null) {
-            if (codeEnd == null) {
+            if (codeEnd == null) { // == null is end
                 lst = eventRepository
                         .findAllByTitleAndCategoryEqual(typeOfEvent, title)
                         .stream()
@@ -434,7 +444,7 @@ public class EventService implements IEventService {
                         .map(e -> eventConverter.entityConvertToResponseEvent(e))
                         .collect(Collectors.toList());
             }
-            if (codeEnd != null && codeEnd == 1) {
+            if (codeEnd != null && codeEnd == 1) { // ==1 is not end
                 lst = eventRepository
                         .findAllByTitleAndCategoryEqual(typeOfEvent, title)
                         .stream()
@@ -483,15 +493,19 @@ public class EventService implements IEventService {
     public ResponseEvent addUserToListOfParticipation(int idEvent, String email) {
         UserDTO userDTO = userService.findUserByEmail(email);
         EventDTO eventDTO = findById(idEvent);
+        StatusDTO statusDTO = statusService.getStatusByEvent(eventDTO);
         if (userDTO != null &&
-                eventDTO != null && !eventDTO.getCancel() &&
+                eventDTO != null &&
                 !checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators()) &&
-                eventDTO.getUser().getId() != userDTO.getId()
+                !statusDTO.getEnded()
         ) {
-            eventDTO.addUserDTO(userDTO);
-            EventEntity eventEntity = eventConverter.toEntity(eventDTO);
-            eventEntity = eventRepository.save(eventEntity);
-            return eventConverter.entityConvertToResponseEvent(eventEntity);
+            if (!eventDTO.getCancel() && eventDTO.getUser().getId() != userDTO.getId()) {
+                eventDTO.addUserDTO(userDTO);
+                EventEntity eventEntity = eventConverter.toEntity(eventDTO);
+                eventEntity = eventRepository.save(eventEntity);
+                return eventConverter.entityConvertToResponseEvent(eventEntity);
+            }
+
         }
         return null;
     }
@@ -511,7 +525,7 @@ public class EventService implements IEventService {
         UserDTO userDTO = userService.findUserByEmail(email);
         EventDTO eventDTO = findById(idEvent);
         if (userDTO != null &&
-                eventDTO != null && !eventDTO.getCancel() &&
+                eventDTO != null &&
                 checkUserIsInParticipatorsOrNot(userDTO, eventDTO.getParticipators())
         ) {
             eventDTO.removeUserToParticipatorsList(userDTO);
@@ -830,8 +844,7 @@ public class EventService implements IEventService {
                 }
 
             }
-        }
-        else if (statusCode != null && starStart == null && starEnd == null &&
+        } else if (statusCode != null && starStart == null && starEnd == null &&
                 typeOfDate != null && dateStart == null && dateEnd == null && star == null
         ) { // filter by typeOfDate || //today(1), yesterday(2), within7days(3),thisMonth(4)
             if (typeOfDate >= 1 && typeOfDate <= 4 && statusCode >= 1 && statusCode <= 3) {
@@ -845,13 +858,13 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
-                                                     !e.getCancel();
+                                                    !e.getCancel();
                                         if (statusCode == 3)
                                             return e.getStatus().getEnded() &&
-                                                     !e.getCancel();
+                                                    !e.getCancel();
                                         return Boolean.parseBoolean(null);
                                     }
                             )
@@ -868,7 +881,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -892,7 +905,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -923,7 +936,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -942,15 +955,13 @@ public class EventService implements IEventService {
                 }
 
             }
-        }
-        else if (statusCode != null && starStart == null && starEnd == null &&
+        } else if (statusCode != null && starStart == null && starEnd == null &&
                 typeOfDate != null && dateStart == null && dateEnd == null && star != null
         ) { // filter by typeOfDate || //today(1), yesterday(2), within7days(3),thisMonth(4)
             if (typeOfDate >= 1 && typeOfDate <= 4 && statusCode >= 1 && statusCode <= 3
                     && star >= 1 && star <= 5
             ) {
                 LocalDate currentDate = LocalDate.now();
-
                 if (typeOfDate == 1) { //today
                     filterEvents = eventRepository
                             .findAllByUser(userConverter.toEntity(userService.findUserByEmail(email)))
@@ -959,7 +970,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel() ;
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -969,7 +980,9 @@ public class EventService implements IEventService {
                                         return Boolean.parseBoolean(null);
                                     }
                             )
-                            .filter(e -> e.getCreatedAt().toLocalDate().isEqual(LocalDate.now()) && e.getStar() <= star)
+                            .filter(e -> e.getCreatedAt().toLocalDate().isEqual(LocalDate.now()) &&
+                                    e.getStar() <= star
+                            )
                             .map(e -> eventConverter.entityConvertToResponseEvent(e))
                             .collect(Collectors.toList());
                 }
@@ -982,7 +995,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -1007,7 +1020,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -1022,7 +1035,6 @@ public class EventService implements IEventService {
                                     && e.getStar() <= star
                             )
                             .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                            .sorted(Comparator.comparing(e -> e.getCreateAt().toLocalDate()))
                             .collect(Collectors.toList());
                 }
                 if (typeOfDate == 4) { //this_month
@@ -1039,7 +1051,7 @@ public class EventService implements IEventService {
                                     {
                                         if (statusCode == 1)
                                             return e.getStatus().getCreated() && !e.getStatus().getOperating() &&
-                                                    !e.getStatus().getEnded() &&  !e.getCancel();
+                                                    !e.getStatus().getEnded() && !e.getCancel();
                                         if (statusCode == 2)
                                             return e.getStatus().getOperating() && !e.getStatus().getEnded() &&
                                                     !e.getCancel();
@@ -1054,7 +1066,6 @@ public class EventService implements IEventService {
                                     && e.getStar() <= star
                             )
                             .map(e -> eventConverter.entityConvertToResponseEvent(e))
-                            .sorted(Comparator.comparing(e -> e.getCreateAt().toLocalDate()))
                             .collect(Collectors.toList());
                 }
 

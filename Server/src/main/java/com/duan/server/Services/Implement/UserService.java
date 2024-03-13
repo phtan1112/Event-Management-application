@@ -48,9 +48,6 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Autowired
     private EventService eventService;
-    @Autowired
-    private EventConverter eventConverter;
-
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -102,7 +99,6 @@ public class UserService implements IUserService, UserDetailsService {
 
             UserDTO userDTO1 = userConverter.toDto(userEntity);
             userDTO1.setToken(null);
-
             mailService.sendAccountRegistered(userDTO1.getEmail(), userDTO1);
             return userDTO1;
         }
@@ -127,7 +123,7 @@ public class UserService implements IUserService, UserDetailsService {
     public UserDTO findUserByEmail(String email) {
         UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity != null) {
-            UserDTO userDTO = userConverter.toDto(userEntity);
+            UserDTO userDTO = userConverter.toDtoNotHidePassword(userEntity);
             userDTO.setList_events_saved(
                     userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
             return userDTO;
@@ -138,7 +134,7 @@ public class UserService implements IUserService, UserDetailsService {
     @Override
     public UserDTO restorePassword(String email, String password) {
         UserEntity userEntity = userRepository.findByEmail(email);
-        if (userEntity.getId() != null && password.length() >= 6) {
+        if (userEntity!= null && password.length() >= 6) {
             userEntity.setPassword(passwordEncoder.encode(password));
 
             String token = jwtService.generateToken(new CustomUserDetail(userEntity));
@@ -184,7 +180,6 @@ public class UserService implements IUserService, UserDetailsService {
         userDTO.setList_events_saved(
                 userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
         userDTO.setToken(token);
-
         return userDTO;
     }
 
@@ -270,9 +265,9 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO uploadAvatarUserByEmail(String email, MultipartFile image) {
-        UserDTO userDTO = findUserByEmail(email);
+        UserDTO userDTO = userConverter.toDtoNotHidePassword(userRepository.findByEmail(email));
         String emailFromAuthorization = getUserEmailByAuthorization();
-        if (userDTO.getId() != null) {
+        if (userDTO != null) {
             String roleAuth = getRoleUser();
             if (roleAuth.equals("ROLE_USER")) {
                 if (emailFromAuthorization.equals(email)) {
@@ -284,7 +279,7 @@ public class UserService implements IUserService, UserDetailsService {
 
                                 userDTO.setAvatar(urlImageUploaded.get());
 
-                                UserEntity userEntity = userRepository.save(userConverter.toEntity(userDTO));
+                                UserEntity userEntity = userRepository.save(userConverter.toEntityNotHidePassword(userDTO));
                                 return userConverter.toDto(userEntity);
                             }
                         }
@@ -310,20 +305,30 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO saveEventIntoEventSaveListByUser(int idEvent) {
-        UserDTO userDTO = findUserByEmail();
+        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        UserDTO userDTO = userConverter.toDtoNotHidePassword(userEntity);
         EventDTO eventDTO = eventService.findById(idEvent);
+
         if (userDTO != null && eventDTO != null) {
-            if (!checkEventIsInEventSavedListOrNot(
-                    userDTO.getList_events_saved(),
-                    eventDTO)) {
+            userDTO.setList_events_saved(userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
+
+            if (!checkEventIsInEventSavedListOrNot(userDTO.getList_events_saved(), eventDTO))
+            {
                 userDTO.addEventToSaveList(eventDTO);
-                UserEntity userEntity = userConverter.toEntity(userDTO);
+
+                userEntity = userConverter.toEntityNotHidePassword(userDTO);
                 userEntity.setList_events_saved(
                         userConverter.convertEventSavedListToEntity(userDTO.getList_events_saved()));
                 userEntity = userRepository.save(userEntity);
+
                 userDTO = userConverter.toDto(userEntity);
                 userDTO.setList_events_saved(
                         userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
+
+                for(EventDTO event :userDTO.getList_events_saved()){
+                    event.getUser().setPassword("**********");
+
+                }
                 return userDTO;
             } else {
                 return null;
@@ -335,7 +340,7 @@ public class UserService implements IUserService, UserDetailsService {
 
     private Boolean checkEventIsInEventSavedListOrNot(Set<EventDTO> eventSavedList, EventDTO eventDTO) {
         for (EventDTO eventDTO1 : eventSavedList) {
-            if (eventDTO1.getId() == eventDTO.getId()) {
+            if (Objects.equals(eventDTO1.getId(), eventDTO.getId())) {
                 return true;
             }
         }
@@ -344,14 +349,16 @@ public class UserService implements IUserService, UserDetailsService {
 
     @Override
     public UserDTO removeEventFromEventSavedList(int idEvent) {
-        UserDTO userDTO = findUserByEmail();
+        UserEntity userEntity = userRepository.findByEmail(getUserEmailByAuthorization());
+        UserDTO userDTO = userConverter.toDtoNotHidePassword(userEntity);
         EventDTO eventDTO = eventService.findById(idEvent);
         if (userDTO != null && eventDTO != null) {
+            userDTO.setList_events_saved(userConverter.convertEventSavedListToDTO(userEntity.getList_events_saved()));
             if (checkEventIsInEventSavedListOrNot(
-                    userDTO.getList_events_saved()
-                    , eventDTO)) {
+                    userDTO.getList_events_saved(), eventDTO))
+            {
                 userDTO.removeEventToSaveList(eventDTO);
-                UserEntity userEntity = userConverter.toEntity(userDTO);
+                userEntity = userConverter.toEntityNotHidePassword(userDTO);
                 userEntity.setList_events_saved(
                         userConverter.convertEventSavedListToEntity(userDTO.getList_events_saved()));
                 userEntity = userRepository.save(userEntity);

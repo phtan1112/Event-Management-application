@@ -101,7 +101,7 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
     }
 
     @Async
-    @Scheduled(fixedRate = 1000) // every second, the method will check the otp code is expired or not.
+    @Scheduled(fixedRate = 1000) // every seconds, the method will check the otp code is expired or not.
     public void changeOTPExpired() {
         List<VerificationCode> lst_otp = verificationService.getAll(false);
         if(!lst_otp.isEmpty()){

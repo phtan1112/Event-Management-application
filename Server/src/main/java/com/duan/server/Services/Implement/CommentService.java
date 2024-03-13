@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -65,6 +66,13 @@ public class CommentService implements ICommentService {
                 eventService.calculateStarOfEvent(commentRequest.getEvent_id());
                 CommentDTO commentDTO = commentConverter.toDto(commentEntity);
                 commentDTO.setEvent(eventService.findById(eventDTO.getId()));
+
+                commentDTO.getEvent().getUser().setPassword("*************");
+
+                for (UserDTO userDTO1 : commentDTO.getEvent().getParticipators()) {
+                    userDTO1.setPassword("********");
+                }
+
                 return commentDTO;
             }
 
@@ -91,6 +99,13 @@ public class CommentService implements ICommentService {
                 eventService.calculateStarOfEvent(commentEntity.getEvent().getId());
                 CommentDTO commentDTO = commentConverter.toDto(commentEntity);
                 commentDTO.setEvent(eventConverter.toDTO(commentEntity.getEvent()));
+                commentDTO.getEvent().getUser().setPassword("*************");
+
+                for (UserDTO userDTO1 : commentDTO.getEvent().getParticipators()) {
+                    userDTO1.setPassword("********");
+                }
+
+
                 return commentDTO;
             }
         }

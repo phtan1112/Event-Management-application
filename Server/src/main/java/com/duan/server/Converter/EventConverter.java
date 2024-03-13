@@ -24,15 +24,24 @@ public class EventConverter {
     public Set<UserDTO> convertParticipatorsToDTO(Set<UserEntity> userEntities) {
         return userEntities
                 .stream()
+                .map(u -> userConverter.toDtoNotHidePassword(u))
+                .collect(Collectors.toSet());
+    }
+
+    public Set<UserDTO> convertParticipatorsToDTOHidePassword(Set<UserEntity> userEntities) {
+        return userEntities
+                .stream()
                 .map(u -> userConverter.toDto(u))
                 .collect(Collectors.toSet());
     }
 
     public Set<UserEntity> convertParticipatorsToEntity(Set<UserDTO> userDTOS) {
-        return userDTOS
+        return userDTOS != null?  userDTOS
                 .stream()
-                .map(u -> userConverter.toEntity(u))
-                .collect(Collectors.toSet());
+                .map(u -> userConverter.toEntityNotHidePassword(u))
+                .collect(Collectors.toSet())
+                : null
+                ;
     }
 
     public EventEntity toEntity(EventDTO eventDTO) {
@@ -65,7 +74,7 @@ public class EventConverter {
         if (eventDTO.getCreatedAt() != null) {
             eventEntity.setCreatedAt(eventDTO.getCreatedAt());
         }
-        eventEntity.setUser(userConverter.toEntity(eventDTO.getUser()));
+        eventEntity.setUser(userConverter.toEntityNotHidePassword(eventDTO.getUser()));
         eventEntity.setCategory(categoryConverter.toEntity(eventDTO.getCategory()));
         eventEntity.setParticipators(convertParticipatorsToEntity(eventDTO.getParticipators()));
         return eventEntity;
@@ -100,7 +109,7 @@ public class EventConverter {
             eventDTO.setTime_start(eventEntity.getTime_start());
             eventDTO.setTime_end(eventEntity.getTime_end());
             eventDTO.setCreatedAt(eventEntity.getCreatedAt());
-            eventDTO.setUser(userConverter.toDto(eventEntity.getUser()));
+            eventDTO.setUser(userConverter.toDtoNotHidePassword(eventEntity.getUser()));
             eventDTO.setCategory(categoryConverter.toDTO(eventEntity.getCategory()));
             //cannot convert status entity to status dto in event converter. it loop permanent
             eventDTO.setParticipators(convertParticipatorsToDTO(eventEntity.getParticipators()));
@@ -132,7 +141,7 @@ public class EventConverter {
                         .user(userConverter.toDto(eventEntity.getUser()))
                         .category(categoryConverter.toDTO(eventEntity.getCategory()))
                         .numberOfParticipators((int) eventEntity.getParticipators().stream().count())
-                        .participators(convertParticipatorsToDTO(eventEntity.getParticipators()))
+                        .participators(convertParticipatorsToDTOHidePassword(eventEntity.getParticipators()))
                         .comments(
                                 commentConverter.convertListCommentOfEventToCommentResponseDTO(
                                         eventEntity.getComments()));
