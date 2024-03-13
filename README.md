@@ -21,7 +21,7 @@
 1. **Run this command below on your terminal:**
 
    ```Powershell
-   docker run -dp 8083:8083 --name springboot-docker-container tanphuocdt1/springboot-docker:v1.0.7
+   docker run -dp 8083:8083 --name springboot-docker-container tanphuocdt1/springboot-docker:v1.0.8
 2. Watch logs of this container until you see the logs `Started ServerApplication in x.xxx seconds`.  
 3. **Note:**
    You should put the port 8083 if you do not have any application that run in this port. If you have, so you need to change the different port.
