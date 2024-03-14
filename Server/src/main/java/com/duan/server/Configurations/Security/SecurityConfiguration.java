@@ -78,13 +78,17 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/event/remove-participator").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.GET, "/api/v1/event/view-event/**").hasAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.GET, "/api/v1/event/event-upcoming/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/event/all-events-of-all-users").permitAll()
+
+
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/event/delete/**").hasAuthority("ROLE_USER")
                         //comment
                         .requestMatchers(HttpMethod.POST, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/comment/**").hasAnyAuthority("ROLE_USER")
                         //verification
-                        .requestMatchers(HttpMethod.GET, "/api/v1/verify/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/verify/**").permitAll()
 
                         //disallow everything else
                         .anyRequest().authenticated()

@@ -60,5 +60,5 @@ public interface IEventService {
 
     List<ResponseEvent> getAllEventsByUserParticipated(Integer idUser);
 
-
+    List<ResponseEvent> viewAllEventsOfAllUsers();
 }

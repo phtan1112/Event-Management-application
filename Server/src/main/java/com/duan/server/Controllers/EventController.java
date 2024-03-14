@@ -385,5 +385,18 @@ public class EventController {
                                 .build(),HttpStatus.BAD_REQUEST);
     }
 
+    @GetMapping("/all-events-of-all-users")
+    public ResponseEntity<?> viewAllEventsOfAllUser() {
+        List<ResponseEvent> result = eventService.viewAllEventsOfAllUsers();
+        if (!result.isEmpty()) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            CodeAndMessage cm = new CodeAndMessage();
+            cm.setCode(1);
+            cm.setMessage("There are no events available");
+            return new ResponseEntity<>(cm, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
 

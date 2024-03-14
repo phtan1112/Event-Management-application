@@ -5,6 +5,7 @@ import com.duan.server.DTO.*;
 import com.duan.server.Models.CommentEntity;
 import com.duan.server.Models.EventEntity;
 import com.duan.server.Models.StatusEntity;
+import com.duan.server.Models.UserEntity;
 import com.duan.server.Repository.EventRepository;
 import com.duan.server.Response.ResponseEvent;
 import com.duan.server.Services.IEventService;
@@ -1135,5 +1136,14 @@ public class EventService implements IEventService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ResponseEvent> viewAllEventsOfAllUsers() {
+        List<EventEntity> allEventsOfUsers = eventRepository.findAll();
+        return allEventsOfUsers
+                .stream()
+                .filter(e-> e.getStatus().getEnded())
+                .map(e-> eventConverter.entityConvertToResponseEvent(e))
+                .toList();
 
+    }
 }
