@@ -119,6 +119,13 @@
             <version>3.2.1</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.bucket4j/bucket4j-core -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.7.0</version>
+        </dependency>
+
 
     </dependencies>
 

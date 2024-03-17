@@ -5,6 +5,9 @@ import { useSignIn } from "@clerk/clerk-expo";
 import Spinner from "react-native-loading-spinner-overlay";
 import Button from "../../common/Button";
 import COLORS from "../../Utils/Colors";
+import { PORT_API } from "../../Utils/Config";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const PwReset = () => {
   const [emailAddress, setEmailAddress] = useState("");
@@ -14,8 +17,19 @@ const PwReset = () => {
   const { signIn, setActive } = useSignIn();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
+  console.log(password);
 
-  // Request a passowrd reset code by email
+  const saveDataToLocalStorage = async (userData) => {
+    const userDataString = JSON.stringify(userData);
+    try {
+      await AsyncStorage.setItem("userData", userDataString);
+      console.log("Data saved successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error);
+    }
+  };
+
   const onRequestReset = async () => {
     setLoading(true);
     try {
@@ -41,9 +55,28 @@ const PwReset = () => {
         code,
         password,
       });
-      console.log(result);
-      alert("Password reset successfully");
+      if (password) {
+        const response = await fetch(`${PORT_API}/user/restore-password`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: emailAddress,
+            password: password,
+          }),
+        });
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log("Change password successfully:", responseData);
+          saveDataToLocalStorage(responseData.userDTO);
+        } else {
+          const errorData = await response.json();
+          console.error("Change password failed:", errorData.error);
+        }
+      }
 
+      alert("Password reset successfully");
       // Set the user session active, which will log in the user automatically
       await setActive({ session: result.createdSessionId });
     } catch (err) {

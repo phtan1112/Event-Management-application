@@ -1,1 +1,1 @@
-export const PORT_API = 'https://dba0-222-253-125-68.ngrok-free.app'
+export const PORT_API = 'http://13.228.53.183'

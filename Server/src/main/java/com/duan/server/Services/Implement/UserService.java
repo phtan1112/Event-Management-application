@@ -136,16 +136,9 @@ public class UserService implements IUserService, UserDetailsService {
         UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity!= null && password.length() >= 6) {
             userEntity.setPassword(passwordEncoder.encode(password));
-
-            String token = jwtService.generateToken(new CustomUserDetail(userEntity));
-
             userEntity = userRepository.save(userEntity);
-
-            tokenService.revokeAndSetExpiredTokenOfUser(userEntity);
-            tokenService.saveUserEntityIntoToken(userEntity, token);
-
             UserDTO userDTO = userConverter.toDto(userEntity);
-            userDTO.setToken(token);
+            userDTO.setToken(null);
             return userDTO;
         }
         return null;

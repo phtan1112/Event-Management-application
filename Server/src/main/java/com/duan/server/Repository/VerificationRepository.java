@@ -11,5 +11,4 @@ public interface VerificationRepository extends JpaRepository<VerificationCode,I
 
 
     VerificationCode findByEmailAndOtp(String email, String otp);
-    List<VerificationCode> findAllByIsExpired(Boolean isExpired);
 }

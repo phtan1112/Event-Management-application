@@ -1,20 +1,23 @@
 import { View, Text, TextInput } from 'react-native'
 import React, { useState } from 'react'
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome, Fontisto } from '@expo/vector-icons';
 import Colors from '../Utils/Colors';
 
 export default function SearchBar({ setSearchText }) {
     const [searchInput, setSearchInput] = useState()
+    const handleSearchSubmit = () => {
+        setSearchText(searchInput);
+        setSearchInput('');
+    };
     return (
-        <View style={{ marginTop: 15 }}>
+        <View style={{}}>
             <View style={{
-                display: 'flex', flexDirection: 'row', gap: 5, alignItems: 'center', borderWidth: 0.6,
-                borderColor: Colors.GRAY, padding: 8, borderRadius: 8
+                display: 'flex', flexDirection: 'row', gap: 5, alignItems: 'center', padding: 18, borderRadius: 32, backgroundColor: '#F3F4F6'
             }}>
-                <Ionicons name='search-outline' size={24} color="black" />
-                <TextInput placeholder='Search...'
+                <Fontisto name="search" size={24} color={Colors.PRIMARY} />
+                <TextInput placeholder='Search...' value={searchInput}
                     onChangeText={(value) => setSearchInput(value)}
-                    onSubmitEditing={() => setSearchText(searchInput)}
+                    onSubmitEditing={handleSearchSubmit}
                     style={{ width: '100%' }} />
             </View>
         </View>

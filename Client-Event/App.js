@@ -1,32 +1,58 @@
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from "@react-navigation/native";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
 import { useFonts } from 'expo-font';
-import LoginScreen from './App/Screen/LoginScreen';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import * as SecureStore from "expo-secure-store";
 import Register from './App/Screen/AuthScreen/Login';
-import AuthScreen from './App/Navigations/AuthScreen'
-import TabNavigation from './App/Navigations/TabNavigation';
+import TabNavigation from './App/Navigations/TabNavigation.jsx';
+import 'react-native-gesture-handler'
+import { Provider } from 'react-redux';
+import { store } from './App/store/store';
+import { UserProvider } from './App/Context/context';
+import { EventProvider } from './App/Context/SaveContext';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+import { AntDesign } from '@expo/vector-icons';
+import MainNavigation from './App/Navigations/MainNavigation';
 
-const tokenCache = {
-  async getToken(key) {
-    try {
-      return SecureStore.getItemAsync(key);
-    } catch (err) {
-      return null;
-    }
-  },
-  async saveToken(key, value) {
-    try {
-      return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
-  },
+
+const toastConfig = {
+
+  success: (props) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: 'pink' }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{
+        fontSize: 15,
+        fontWeight: '400'
+      }}
+    />
+  ),
+  /*
+    Overwrite 'error' type,
+    by modifying the existing `ErrorToast` component
+  */
+  error: (props) => (
+    <ErrorToast
+      {...props}
+      text1Style={{
+        fontSize: 17
+      }}
+      text2Style={{
+        fontSize: 15
+      }}
+    />
+  ),
+
+  tomatoToast: ({ text1, props }) => (
+    <View style={{ gap: 8, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '80%', backgroundColor: 'white', borderRadius: 10 }}>
+      <AntDesign name="checkcircle" size={24} color="#30b22e" />
+      <Text style={{ color: '#30b22e', textAlign: 'center', fontSize: 17, fontWeight: '600' }}>{text1}</Text>
+      {/* <Text>{props.uuid}</Text> */}
+    </View>
+  )
 };
-
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -40,23 +66,16 @@ export default function App() {
     return null;
   }
   return (
-    <ClerkProvider
-      publishableKey={'pk_test_c21hc2hpbmcta29pLTU1LmNsZXJrLmFjY291bnRzLmRldiQ'}
-      tokenCache={tokenCache}>
-      <SignedIn>
-        <NavigationContainer>
-          <TabNavigation />
-        </NavigationContainer>
-      </SignedIn>
-      <SignedOut>
-        {/* <LoginScreen /> */}
-        <NavigationContainer>
-          <AuthScreen />
-        </NavigationContainer>
-      </SignedOut>
-      {/* <SafeAreaView style={styles.container}>
-      </SafeAreaView> */}
-    </ClerkProvider>
+    <UserProvider>
+      <EventProvider>
+        <Provider store={store}>
+          <NavigationContainer>
+            <MainNavigation />
+          </NavigationContainer>
+          <Toast config={toastConfig} />
+        </Provider>
+      </EventProvider>
+    </UserProvider>
   );
 }
 

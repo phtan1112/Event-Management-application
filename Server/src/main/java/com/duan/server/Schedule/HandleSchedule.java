@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,10 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
 
     //auto change status when the status is start.
     @Async
-    @Scheduled(fixedRate = 5000) //5s will call the method below once.
-    public void scheduleFixedRateTaskAsync() throws InterruptedException {
+//    @Scheduled(fixedRate = 3000) //3s will call the method below once.
+    @Scheduled(cron = "*/5 * * * * *")
+    public void changeStatusOfEvent(){
+
         List<EventDTO> allEvents = eventService.getAllEventsByStatusEndedIsFalse();
         LocalDate currentDate = LocalDate.now(); //2024-02-13
         LocalTime currentTime = LocalTime.now(); // 14:24:32.699555900
@@ -59,8 +62,7 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
                         eventDTO.getTime_end().getHour(),
                         eventDTO.getTime_end().getMinute());
 
-
-                if (currentDate.isEqual(TARGET_DATE_START)) { // event da toi ngay
+                if (currentDate.isEqual(TARGET_DATE_START) || currentDate.isAfter(TARGET_DATE_START)) { // event da toi ngay
                     //handle changing from created to operating
                     if (!eventService.findStatusByEvent(eventDTO.getId()).getOperating()
                             &&
@@ -69,17 +71,22 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
                         Map<Object, Object> fields = new HashMap<>();
                         fields.put("operating", true);
                         eventService.changeStatusEventByIdEventForSchedule(eventDTO, fields);
+                        System.out.println("-------CHANGE STATUS FROM CREATED TO OPERATING OF ID EVENT = " + eventDTO.getId());
+                        System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
+                        System.out.println();
                     }
                     //handle changing from operating to ended
                     if (currentTime.isAfter(TARGET_TIME_END)) {
                         Map<Object, Object> fields = new HashMap<>();
                         fields.put("ended", true);
                         eventService.changeStatusEventByIdEventForSchedule(eventDTO, fields);
+                        System.out.println("-------CHANGE STATUS FROM OPERATING TO ENDED OF ID EVENT = " + eventDTO.getId());
+                        System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
+                        System.out.println();
                     }
                 }
             }
         }
-        Thread.sleep(2000);
     }
 
     //handle 1am everyday
@@ -98,37 +105,29 @@ public class HandleSchedule { // the task will run parallel in schedule tasks.
         });
         System.out.println("------------------CLEAR TOKEN EXPIRED SUCCESSFULLY------------------");
         System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
-    }
-
-    @Async
-    @Scheduled(fixedRate = 1000) // every seconds, the method will check the otp code is expired or not.
-    public void changeOTPExpired() {
-        List<VerificationCode> lst_otp = verificationService.getAll(false);
-        if(!lst_otp.isEmpty()){
-            lst_otp.forEach(otp -> {
-                if (checkExpiredOTP(otp.getCreateAt())) {
-                    verificationService.changeToExpired(otp.getId());
-                }
-            });
-        }
-    }
-    private boolean checkExpiredOTP(LocalTime createAt){
-        LocalTime currentTime = LocalTime.now();
-        if(currentTime.isAfter(createAt.plusSeconds(60))){
-            return true;
-        }
-        return false;
+        System.out.println();
     }
 
     @Async
     @Scheduled(cron = "0 0 2 ? * SUN") // 2am every sunday
     // (cron = "0 40 15 * * *") second - minute - hour - day in month - month - day in week)
     public void deleteOTPExpired() {
-        List<VerificationCode> lst_otp = verificationService.getAll(true);
+        List<VerificationCode> lst_otp = verificationService.getAll();
+        List<VerificationCode> lst_otp_delete = null;
         if(!lst_otp.isEmpty()){
-            verificationService.deleteAllOTP(lst_otp);
+            lst_otp_delete = lst_otp
+                    .stream()
+                    .filter(otp-> verificationService.checkTokenIsExpiredOrNot(otp.getCreateAt()))
+                    .toList();
+            System.out.println(lst_otp_delete);
         }
-        System.out.println("------------------CLEAR VERIFICATION CODE EXPIRED SUCCESSFULLY------------------");
-        System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
+        if(lst_otp_delete != null && !lst_otp_delete.isEmpty()){
+            System.out.println(lst_otp_delete);
+            verificationService.deleteAllOTP(lst_otp_delete);
+            System.out.println("------------------CLEAR VERIFICATION CODE EXPIRED SUCCESSFULLY------------------");
+            System.out.println("------------------DATE: " + LocalDateTime.now() + " --------------------");
+            System.out.println();
+        }
+
     }
 }

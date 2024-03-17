@@ -31,9 +31,13 @@ public class EventEntity {
     )
     private String title;
     private String description;
+    @Column(nullable = false)
     private String image1;
+    @Column(nullable = false)
     private String image2;
+    @Column(nullable = false)
     private String image3;
+    @Column(nullable = false)
     private String image4;
     @Column(
             nullable = false
@@ -42,6 +46,7 @@ public class EventEntity {
 
     private Double latitude;
     private Double longitude;
+    @Column(nullable = false)
     private Double star;
 
     @Column(

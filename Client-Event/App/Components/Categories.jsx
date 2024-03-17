@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { PORT_API } from "../Utils/Config";
 import Colors from "../Utils/Colors";
 
-export default function Categories() {
+export default function Categories({ onCategoryPress, viewAll }) {
   const [categories, setCategories] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  console.log(categories);
+  const [activeCategory, setActiveCategory] = useState(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -35,29 +36,75 @@ export default function Categories() {
     };
     fetchData();
   }, []);
+  const handleCategoryPress = (category) => {
+    setActiveCategory(category);
+    if (onCategoryPress) {
+      onCategoryPress(category);
+    }
+  };
   return (
     <View style={{ marginTop: 20 }}>
       {isLoading ? (
         <ActivityIndicator size={"large"} color="blue" />
-      ) : (
+      ) : viewAll ? (
         <FlatList
           data={categories}
+          // numColumns={4}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity
+              style={styles.container}
+              onPress={() => handleCategoryPress(item)}
+            >
+              <View
+                style={
+                  activeCategory === item
+                    ? styles.activeCategory
+                    : styles.iconContainer
+                }
+              >
+                <Image
+                  source={{ uri: item?.thumbnail }}
+                  style={{ width: 30, height: 30 }}
+                />
+              </View>
+              <Text style={{ fontFamily: "appFont-semi", marginTop: 5 }}>
+                {item?.typeOfEvent}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <FlatList
+          data={categories?.slice(0, 4)}
           numColumns={4}
-          renderItem={({ item, index }) =>
-            index <= 3 && (
-              <TouchableOpacity style={styles.container}>
-                <View style={styles.iconContainer}>
-                  <Image
-                    source={{ uri: item?.thumbnail }}
-                    style={{ width: 30, height: 30 }}
-                  />
-                </View>
-                <Text style={{ fontFamily: "appFont-semi", marginTop: 5 }}>
-                  {item?.typeOfEvent}
-                </Text>
-              </TouchableOpacity>
-            )
-          }
+          nestedScrollEnabled={true}
+          scrollEnabled={false}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity
+              style={styles.container}
+              onPress={() => handleCategoryPress(item)}
+            >
+              <View
+                style={
+                  activeCategory === item
+                    ? styles.activeCategory
+                    : styles.iconContainer
+                }
+              >
+                <Image
+                  source={{ uri: item?.thumbnail }}
+                  style={{ width: 30, height: 30 }}
+                />
+              </View>
+              <Text style={{ fontFamily: "appFont-semi", marginTop: 5 }}>
+                {item?.typeOfEvent}
+              </Text>
+            </TouchableOpacity>
+          )}
         />
       )}
     </View>
@@ -74,5 +121,13 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 2,
     borderColor: "#eaeeff",
+  },
+  activeCategory: {
+    backgroundColor: Colors.WHITE,
+    padding: 17,
+    borderRadius: 100,
+    borderWidth: 2,
+    borderColor: "red",
+    elevation: 5,
   },
 });

@@ -16,7 +16,7 @@ import Spinner from "react-native-loading-spinner-overlay";
 import * as Location from "expo-location";
 import Colors from "../../Utils/Colors";
 import { Dropdown } from "react-native-element-dropdown";
-import { MaterialIcons, Feather, Entypo, AntDesign } from "@expo/vector-icons";
+import { MaterialIcons, Feather, Entypo, EvilIcons } from "@expo/vector-icons";
 import locationIcon from "../../../assets/svg/location.svg";
 import SvgUri from "react-native-svg-uri";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -25,7 +25,10 @@ import * as FileSystem from "expo-file-system";
 import ImageItem from "./ImageItem";
 import { PORT_API } from "../../Utils/Config";
 import SuccessModal from "../../common/SuccessModal";
-import Appointment from "../Appointment";
+import { useSelector } from "react-redux";
+import { selectUserInfo } from "../../store/userSlice";
+import { useUserLogin } from "../../Context/context";
+import { useEventContext } from "../../Context/SaveContext";
 
 const imgDir = FileSystem.documentDirectory + "images/";
 
@@ -54,13 +57,28 @@ export default function CreateEvent() {
   const [location, setLocation] = useState("");
   const [longitude, setLongitude] = useState(null);
   const [latitude, setLatitude] = useState(null);
-
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { userData, updateUserAvatar } = useUserLogin();
+
+  function isStartTimeValid(startTime, endTime) {
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+
+    const startDate = new Date();
+    startDate.setHours(startHour, startMinute, 0);
+    const endDate = new Date();
+    endDate.setHours(endHour, endMinute, 0);
+
+    const timeDifference = startDate.getTime() - endDate.getTime();
+
+    return timeDifference >= 1800000;
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,21 +109,7 @@ export default function CreateEvent() {
       setResponData(updatedResponData);
     }
   }, [categories]);
-  useEffect(() => {
-    const getPermissions = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.log("Please grant location permissions");
-        return;
-      }
 
-      let currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      console.log("Location:");
-      console.log(currentLocation);
-    };
-    getPermissions();
-  }, []);
   useEffect(() => {
     // reverseGeocode();
     geocode();
@@ -156,20 +160,53 @@ export default function CreateEvent() {
     setStartDateTime(currentDate);
     setStartButtonText(convertDateFormat(currentDate.toLocaleDateString()));
     if (startMode === "time") {
-      const startTime =
-        new Date(startDateTime).getHours() * 60 +
-        new Date(startDateTime).getMinutes();
-      const endTime =
-        new Date(currentDate).getHours() * 60 +
-        new Date(currentDate).getMinutes();
-      if (startTime < endTime + 30) {
-        alert(
-          "Warning: Start time should be at least 30 minutes after the end time."
-        );
-      } else {
-        const formattedTime = convertToAMPM(currentDate.toLocaleTimeString());
-        setStartTimeText(formattedTime);
+      const formattedTime = convertToAMPM(currentDate.toLocaleTimeString());
+      if (formattedTime) {
+        if (endTimeText !== "Pick a Time" && endTimeText) {
+          console.log(formattedTime);
+          function isStartTimeValid(startTime, endTime) {
+            const startTimeMinutes = convertToMinutes(startTime);
+            const endTimeMinutes = convertToMinutes(endTime);
+            return endTimeMinutes - startTimeMinutes >= 30;
+          }
+
+          function convertToMinutes(timeString) {
+            const [time, ampm] = timeString.split(" ");
+            const [hours, minutes] = time.split(":").map(Number);
+            let hours24 = hours % 12;
+            if (ampm.toUpperCase() === "PM") {
+              hours24 += 12;
+            }
+
+            return hours24 * 60 + minutes;
+          }
+          const isValid = isStartTimeValid(formattedTime, endTimeText);
+
+          if (isValid) {
+            setStartTimeText(formattedTime);
+          } else {
+            alert(
+              "Warning: Start time is at least 30 minutes before the end time."
+            );
+          }
+        } else {
+          setStartTimeText(formattedTime);
+        }
       }
+      // const startTime =
+      //   new Date(startDateTime).getHours() * 60 +
+      //   new Date(startDateTime).getMinutes();
+      // const endTime =
+      //   new Date(currentDate).getHours() * 60 +
+      //   new Date(currentDate).getMinutes();
+      // console.log("start Time", startTime);
+      // console.log("end Time", endTime);
+      // if (startTime && endTime && endTime && startTime < endTime + 30) {
+      //   alert(
+      //     "Warning: Start time should be at least 30 minutes after the end time."
+      //   );
+      // } else {
+      // }
     }
   };
 
@@ -238,7 +275,9 @@ export default function CreateEvent() {
   const closeModal = () => {
     setModalVisible(false);
   };
-
+  const toggleModal = () => {
+    setIsModalVisible(false);
+  };
   useEffect(() => {
     loadImages();
   }, []);
@@ -316,9 +355,6 @@ export default function CreateEvent() {
   const handleCloseSuccessModal = () => {
     setSuccessModalVisible(false);
   };
-  const username = "tanphuocdt1@gmail.com";
-  const password = "123456";
-  const basicAuth = "Basic " + btoa(username + ":" + password);
   const addEventToBackend = async () => {
     try {
       setLoading(true);
@@ -332,7 +368,6 @@ export default function CreateEvent() {
           type: `image/${fileType}`,
         });
       });
-
       // Append other form data fields
       formData.append("title", eventName);
       formData.append("typeEvent", eventType);
@@ -343,11 +378,11 @@ export default function CreateEvent() {
       formData.append("place", address);
       formData.append("latitude", latitude);
       formData.append("longitude", longitude);
-
+      console.log(userData?.token);
       const response = await fetch(`${PORT_API}/api/v1/event/create`, {
         method: "POST",
         headers: {
-          Authorization: basicAuth,
+          Authorization: `Bearer ${userData?.token}`,
           "Content-Type": "multipart/form-data",
         },
         body: formData,
@@ -362,6 +397,7 @@ export default function CreateEvent() {
           await FileSystem.deleteAsync(image);
         })
       );
+
       setImages([]);
       setEventName("");
       setEventType(null);
@@ -373,6 +409,7 @@ export default function CreateEvent() {
       setLongitude(null);
       setNote("");
       setSuccessModalVisible(true);
+      updateListEvent();
     } catch (error) {
       console.log("Fail", error);
     } finally {
@@ -422,349 +459,376 @@ export default function CreateEvent() {
   };
   const handleConfirmAndBook = () => {
     if (validateForm()) {
+      console.log(true);
       addEventToBackend();
     }
   };
 
   return (
-    <ScrollView style={{ backgroundColor: "#fff", flex: 1, padding: 20 }}>
-      <KeyboardAvoidingView>
-        <Spinner visible={loading} />
-        <SuccessModal
-          visible={successModalVisible}
-          onClose={handleCloseSuccessModal}
-        />
-        <View>
-          <TouchableOpacity
-            style={styles.imgContainer}
-            onPress={() => setModalVisible(true)}
-          >
-            {images.length > 0 ? (
-              <Image
-                source={{ uri: images[0] }}
-                style={{ width: "100%", height: "100%", borderRadius: 8 }}
-              />
-            ) : (
-              <Text style={{ fontSize: 30, fontWeight: "bold" }}>+</Text>
-            )}
-          </TouchableOpacity>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
-          >
-            {[...Array(Math.max(4, images.length))].map((_, index) => (
-              <ImageItem
-                key={index}
-                index={index}
-                setModalVisible={setModalVisible}
-                images={images}
-                deleteImage={deleteImage}
-              />
-            ))}
-          </View>
-
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={closeModal}
-          >
-            <TouchableWithoutFeedback onPress={closeModal}>
-              <View style={styles.modalContainer}>
-                <TouchableWithoutFeedback>
-                  <View style={styles.modalContent}>
-                    <Text style={{ fontSize: 22, fontWeight: "bold" }}>
-                      Upload Photo
-                    </Text>
-                    <View
-                      style={{
-                        width: "100%",
-                        justifyContent: "space-between",
-                        marginTop: 40,
-                        flexDirection: "row",
-                        gap: 10,
-                        paddingHorizontal: 10,
-                      }}
-                    >
-                      <TouchableOpacity
-                        onPress={() => selectImage(false)}
-                        style={{
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          padding: 10,
-                          backgroundColor: "#e3e8f1",
-                          borderRadius: 8,
-                        }}
-                      >
-                        <Feather name="camera" size={24} color="#c8a466" />
-                        <Text>Camera</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => selectImage(true)}
-                        style={{
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          padding: 10,
-                          backgroundColor: "#e3e8f1",
-                          borderRadius: 8,
-                        }}
-                      >
-                        <Entypo name="image" size={24} color="#c8a466" />
-                        <Text>Gallery</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
-        </View>
-
-        <Text
-          style={{
-            color: Colors.PRIMARY,
-            fontSize: 18,
-            fontWeight: "bold",
-            marginTop: 20,
-            marginBottom: 10,
-          }}
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <View
+        style={{
+          marginTop: 30,
+          marginLeft: 20,
+          marginBottom: 10,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        {/* <TouchableOpacity
+          onPress={() => setIsModalVisible(true)}
+          style={{ marginTop: 5 }}
         >
-          Event Details
+          <EvilIcons name="navicon" size={35} color={Colors.PRIMARY} />
+        </TouchableOpacity> */}
+        <Text
+          style={{ fontSize: 25, fontWeight: "700", color: Colors.PRIMARY }}
+        >
+          Create Event
         </Text>
+      </View>
+      {/* <CustomModal isVisible={isModalVisible} onClose={toggleModal} /> */}
 
-        <View style={{ marginBottom: 12 }}>
+      <ScrollView style={{ backgroundColor: "#fff", padding: 20 }}>
+        <KeyboardAvoidingView>
+          <Spinner visible={loading} />
+          <SuccessModal
+            visible={successModalVisible}
+            onClose={handleCloseSuccessModal}
+          />
+          <View>
+            <TouchableOpacity
+              style={styles.imgContainer}
+              onPress={() => setModalVisible(true)}
+            >
+              {images.length > 0 ? (
+                <Image
+                  source={{ uri: images[0] }}
+                  style={{ width: "100%", height: "100%", borderRadius: 8 }}
+                />
+              ) : (
+                <Text style={{ fontSize: 30, fontWeight: "bold" }}>+</Text>
+              )}
+            </TouchableOpacity>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              {[...Array(Math.max(4, images.length))].map((_, index) => (
+                <ImageItem
+                  key={index}
+                  index={index}
+                  setModalVisible={setModalVisible}
+                  images={images}
+                  deleteImage={deleteImage}
+                />
+              ))}
+            </View>
+
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modalVisible}
+              onRequestClose={closeModal}
+            >
+              <TouchableWithoutFeedback onPress={closeModal}>
+                <View style={styles.modalContainer}>
+                  <TouchableWithoutFeedback>
+                    <View style={styles.modalContent}>
+                      <Text style={{ fontSize: 22, fontWeight: "bold" }}>
+                        Upload Photo
+                      </Text>
+                      <View
+                        style={{
+                          width: "100%",
+                          justifyContent: "space-between",
+                          marginTop: 40,
+                          flexDirection: "row",
+                          gap: 10,
+                          paddingHorizontal: 10,
+                        }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => selectImage(false)}
+                          style={{
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            padding: 10,
+                            backgroundColor: "#e3e8f1",
+                            borderRadius: 8,
+                          }}
+                        >
+                          <Feather name="camera" size={24} color="#c8a466" />
+                          <Text>Camera</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => selectImage(true)}
+                          style={{
+                            flexDirection: "column",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            padding: 10,
+                            backgroundColor: "#e3e8f1",
+                            borderRadius: 8,
+                          }}
+                        >
+                          <Entypo name="image" size={24} color="#c8a466" />
+                          <Text>Gallery</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+          </View>
+
           <Text
             style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
+              color: Colors.PRIMARY,
+              fontSize: 18,
+              fontWeight: "bold",
+              marginTop: 20,
+              marginBottom: 10,
             }}
           >
-            Event Name
+            Event Details
           </Text>
 
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: Colors.BLACK,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
-            <MaterialIcons
-              name="drive-file-rename-outline"
-              size={24}
-              color="black"
-            />
-            <TextInput
-              autoCapitalize="none"
-              value={eventName}
-              placeholder="Event Name"
-              onChangeText={(eventName) => setEventName(eventName)}
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
+              }}
+            >
+              Event Name
+            </Text>
+
+            <View
               style={{
                 width: "100%",
-                marginLeft: 5,
+                height: 48,
+                borderColor: Colors.BLACK,
+                borderWidth: 1,
+                borderRadius: 8,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                paddingLeft: 20,
               }}
-            />
+            >
+              <MaterialIcons
+                name="drive-file-rename-outline"
+                size={24}
+                color="black"
+              />
+              <TextInput
+                autoCapitalize="none"
+                value={eventName}
+                placeholder="Event Name"
+                onChangeText={(eventName) => setEventName(eventName)}
+                style={{
+                  width: "100%",
+                  marginLeft: 5,
+                }}
+              />
+            </View>
           </View>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
-            }}
-          >
-            Location
-          </Text>
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
+              }}
+            >
+              Location
+            </Text>
 
-          <View
-            style={{
-              width: "100%",
-              height: 48,
-              borderColor: Colors.BLACK,
-              borderWidth: 1,
-              borderRadius: 8,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-              paddingLeft: 20,
-            }}
-          >
-            <Entypo name="location" size={20} color="black" />
-            <TextInput
-              value={address}
-              placeholder="Location"
-              onChangeText={(location) => setAddress(location)}
+            <View
               style={{
                 width: "100%",
-                marginLeft: 5,
+                height: 48,
+                borderColor: Colors.BLACK,
+                borderWidth: 1,
+                borderRadius: 8,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "row",
+                paddingLeft: 20,
               }}
-            />
+            >
+              <Entypo name="location" size={20} color="black" />
+              <TextInput
+                value={address}
+                placeholder="Location"
+                onChangeText={(location) => setAddress(location)}
+                style={{
+                  width: "100%",
+                  marginLeft: 5,
+                }}
+              />
+            </View>
           </View>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
-            }}
-          >
-            Event Type
-          </Text>
-          <View style={styles.containerDropdown}>
-            {renderLabel()}
-            <Dropdown
-              style={[styles.dropdown, isFocus && { borderColor: "blue" }]}
-              placeholderStyle={styles.placeholderStyle}
-              selectedTextStyle={styles.selectedTextStyle}
-              inputSearchStyle={styles.inputSearchStyle}
-              iconStyle={styles.iconStyle}
-              data={responData}
-              search
-              maxHeight={300}
-              labelField="label"
-              valueField="value"
-              placeholder={!isFocus ? "Choose your category" : "..."}
-              searchPlaceholder="Search..."
-              value={eventType}
-              onFocus={() => setIsFocus(true)}
-              onBlur={() => setIsFocus(false)}
-              onChange={(item) => {
-                setEventType(item.value);
-                setIsFocus(false);
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
               }}
-              renderLeftIcon={() => (
-                <MaterialIcons
-                  name="category"
-                  size={24}
-                  style={styles.icon}
-                  color={isFocus ? Colors.PRIMARY : "black"}
+            >
+              Event Type
+            </Text>
+            <View style={styles.containerDropdown}>
+              {renderLabel()}
+              <Dropdown
+                style={[styles.dropdown, isFocus && { borderColor: "blue" }]}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={responData}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder={!isFocus ? "Choose your category" : "..."}
+                searchPlaceholder="Search..."
+                value={eventType}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
+                onChange={(item) => {
+                  setEventType(item.value);
+                  setIsFocus(false);
+                }}
+                renderLeftIcon={() => (
+                  <MaterialIcons
+                    name="category"
+                    size={24}
+                    style={styles.icon}
+                    color={isFocus ? Colors.PRIMARY : "black"}
+                  />
+                )}
+              />
+            </View>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
+              }}
+            >
+              Event Start Date
+            </Text>
+            <View style={styles.dateContainer}>
+              <TouchableOpacity
+                onPress={showStartDatepicker}
+                style={styles.button}
+              >
+                <MaterialIcons name="event" size={30} color="#3498db" />
+                <Text style={styles.buttonText}>{startButtonText}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={showStartTimepicker}
+                style={[styles.button, styles.timeButton]}
+              >
+                <MaterialIcons name="access-time" size={30} color="#2ecc71" />
+                <Text style={styles.buttonText}>{startTimeText}</Text>
+              </TouchableOpacity>
+
+              {showStart && (
+                <DateTimePicker
+                  testID="startDateTimePicker"
+                  value={startDateTime}
+                  mode={startMode}
+                  is24Hour={true}
+                  onChange={onStartChange}
+                  minimumDate={Date.now()}
+                  textColor="#3498db" // Set text color
                 />
               )}
+            </View>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
+              }}
+            >
+              Event End Date
+            </Text>
+            <View style={styles.dateContainer}>
+              <TouchableOpacity
+                onPress={showEndTimepicker}
+                style={[
+                  styles.button,
+                  styles.timeButton,
+                  startTimeText === "Pick a Time" ||
+                  startButtonText === "Pick a Date"
+                    ? { opacity: 0.2, pointerEvents: "none" }
+                    : {},
+                ]}
+              >
+                <MaterialIcons name="access-time" size={30} color="#2ecc71" />
+                <Text style={styles.buttonText}>{endTimeText}</Text>
+              </TouchableOpacity>
+
+              {showEnd && (
+                <DateTimePicker
+                  testID="endDateTimePicker"
+                  value={endDateTime}
+                  mode={endMode}
+                  is24Hour={true}
+                  onChange={onEndChange}
+                  minimumDate={startDateTime || Date.now()}
+                  textColor="#3498db"
+                />
+              )}
+            </View>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 400,
+                marginVertical: 8,
+                fontWeight: "600",
+              }}
+            >
+              Description
+            </Text>
+            <TextInput
+              placeholder="Note"
+              numberOfLines={5}
+              multiline={true}
+              style={styles.noteTextArea}
+              onChangeText={(note) => setNote(note)}
+              defaultValue={note}
             />
           </View>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
-            }}
+          <TouchableOpacity
+            style={{ marginTop: 15, paddingBottom: 40 }}
+            onPress={handleConfirmAndBook}
           >
-            Event Start Date
-          </Text>
-          <View style={styles.dateContainer}>
-            <TouchableOpacity
-              onPress={showStartDatepicker}
-              style={styles.button}
-            >
-              <MaterialIcons name="event" size={30} color="#3498db" />
-              <Text style={styles.buttonText}>{startButtonText}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={showStartTimepicker}
-              style={[styles.button, styles.timeButton]}
-            >
-              <MaterialIcons name="access-time" size={30} color="#2ecc71" />
-              <Text style={styles.buttonText}>{startTimeText}</Text>
-            </TouchableOpacity>
-
-            {showStart && (
-              <DateTimePicker
-                testID="startDateTimePicker"
-                value={startDateTime}
-                mode={startMode}
-                is24Hour={true}
-                onChange={onStartChange}
-                minimumDate={Date.now()}
-                textColor="#3498db" // Set text color
-              />
-            )}
-          </View>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
-            }}
-          >
-            Event End Date
-          </Text>
-          <View style={styles.dateContainer}>
-            <TouchableOpacity
-              onPress={showEndTimepicker}
-              style={[
-                styles.button,
-                styles.timeButton,
-                startTimeText === "Pick a Time" ||
-                startButtonText === "Pick a Date"
-                  ? { opacity: 0.2, pointerEvents: "none" }
-                  : {},
-              ]}
-            >
-              <MaterialIcons name="access-time" size={30} color="#2ecc71" />
-              <Text style={styles.buttonText}>{endTimeText}</Text>
-            </TouchableOpacity>
-
-            {showEnd && (
-              <DateTimePicker
-                testID="endDateTimePicker"
-                value={endDateTime}
-                mode={endMode}
-                is24Hour={true}
-                onChange={onEndChange}
-                minimumDate={startDateTime || Date.now()}
-                textColor="#3498db"
-              />
-            )}
-          </View>
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 400,
-              marginVertical: 8,
-              fontWeight: "600",
-            }}
-          >
-            Description
-          </Text>
-          <TextInput
-            placeholder="Note"
-            numberOfLines={5}
-            multiline={true}
-            style={styles.noteTextArea}
-            onChangeText={(note) => setNote(note)}
-            defaultValue={note}
-          />
-        </View>
-        <TouchableOpacity
-          style={{ marginTop: 15, paddingBottom: 100 }}
-          onPress={handleConfirmAndBook}
-        >
-          <Text style={styles.confirmBtn}>Create new event & Publish</Text>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </ScrollView>
+            <Text style={styles.confirmBtn}>Create new event & Publish</Text>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </ScrollView>
+    </View>
   );
 }
 

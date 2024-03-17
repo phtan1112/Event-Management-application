@@ -14,10 +14,15 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
+../.idea/
 .idea
 *.iws
 *.iml
 *.ipr
+.DS_Store
+../.DS_Store
+/../.DS_Store
+**/.DS_Store
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,5 +36,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-application-dev.properties
