@@ -203,13 +203,14 @@ public class EventService implements IEventService {
         UserDTO userDTO = userService.findUserByEmail(email);
         List<ResponseEvent> rs = new ArrayList<>();
         if (userDTO != null) {
-            List<EventEntity> lstEventEntity = eventRepository.findAllByUser(userConverter.toEntity(userDTO));
+            UserEntity userEntity = userConverter.toEntity(userDTO);
+            List<EventEntity> lstEventEntity = eventRepository.findAllByUser(userEntity);
             lstEventEntity.forEach(e -> {
                 rs.add(eventConverter.entityConvertToResponseEvent(e));
             });
             return rs;
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -217,7 +218,8 @@ public class EventService implements IEventService {
         String email = userService.getUserEmailByAuthorization();
         UserDTO userDTO = userService.findUserByEmail(email);
         if (userDTO != null) {
-            EventEntity eventEntity = eventRepository.findByIdAndUser(id, userConverter.toEntity(userDTO));
+            UserEntity userEntity = userConverter.toEntity(userDTO);
+            EventEntity eventEntity = eventRepository.findByIdAndUser(id,userEntity);
             if (eventEntity != null) {
                 return eventConverter.entityConvertToResponseEvent(eventEntity);
             }

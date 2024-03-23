@@ -32,6 +32,7 @@ public class UserDTO {
     public void addEventToSaveList(EventDTO e){
         if(list_events_saved == null){
             this.list_events_saved = new HashSet<>();
+
         }
         this.list_events_saved.add(e);
     }

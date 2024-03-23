@@ -467,17 +467,20 @@ export default function StatisticEvent() {
                                 alignItems: "center",
                               }}
                             >
-                              {event.participators.map((participant, i) => (
-                                <Image
-                                  key={i}
-                                  source={{ uri: participant?.avatar }}
-                                  style={{
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: 100,
-                                  }}
-                                />
-                              ))}
+                              {event.participators.map(
+                                (participant, i) =>
+                                  i < 4 && (
+                                    <Image
+                                      key={i}
+                                      source={{ uri: participant?.avatar }}
+                                      style={{
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: 100,
+                                      }}
+                                    />
+                                  )
+                              )}
                             </View>
                             <Text style={{ fontSize: 13, fontWeight: "500" }}>
                               {event?.numberOfParticipators} participant
@@ -696,17 +699,20 @@ export default function StatisticEvent() {
                             alignItems: "center",
                           }}
                         >
-                          {event.participators.map((participant, i) => (
-                            <Image
-                              key={i}
-                              source={{ uri: participant?.avatar }}
-                              style={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: 100,
-                              }}
-                            />
-                          ))}
+                          {event.participators.map(
+                            (participant, i) =>
+                              i < 4 && (
+                                <Image
+                                  key={i}
+                                  source={{ uri: participant?.avatar }}
+                                  style={{
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: 100,
+                                  }}
+                                />
+                              )
+                          )}
                         </View>
                         <Text style={{ fontSize: 13, fontWeight: "500" }}>
                           {event?.numberOfParticipators} participant
